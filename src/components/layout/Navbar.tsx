@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Menu, ChevronDown } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { MobileMenu } from './MobileMenu';
@@ -83,67 +84,130 @@ export function Navbar({ genres }: NavbarProps) {
               Browse
             </Link>
             <div className="relative" ref={dropdownRef}>
-              <button
+              <motion.button
                 onClick={() => setGenreDropdown(!genreDropdown)}
-                className="flex items-center gap-1 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors px-2 py-1 rounded-lg hover:bg-[var(--accent-glow)]"
               >
-                Genres <ChevronDown size={14} className={`transition-transform ${genreDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              {genreDropdown && (
-                <div
-                  className="absolute top-full left-0 mt-2 w-64 rounded-xl p-3 shadow-xl z-50"
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                  }}
+                Genres
+                <motion.span
+                  animate={{ rotate: genreDropdown ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <div className="flex flex-wrap gap-1.5">
-                    {genres.map((genre) => (
-                      <Link
-                        key={genre.slug}
-                        href={`/genre/${genre.slug}`}
-                        onClick={() => setGenreDropdown(false)}
-                        className="genre-chip text-xs"
-                      >
-                        {genre.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
+                  <ChevronDown size={14} />
+                </motion.span>
+              </motion.button>
+              <AnimatePresence>
+                {genreDropdown && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setGenreDropdown(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                      transition={{ type: 'spring', damping: 25, stiffness: 400, mass: 0.5 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 rounded-xl overflow-hidden shadow-2xl z-50"
+                      style={{
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: '0 0 30px var(--accent-glow), 0 20px 40px -12px rgba(0, 0, 0, 0.5)',
+                      }}
+                    >
+                      {/* Top accent line */}
+                      <div
+                        className="h-0.5 w-full"
+                        style={{
+                          background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
+                        }}
+                      />
+
+                      <div className="p-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          {genres.map((genre, index) => (
+                            <motion.div
+                              key={genre.slug}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: index * 0.02, duration: 0.15 }}
+                            >
+                              <Link
+                                href={`/genre/${genre.slug}`}
+                                onClick={() => setGenreDropdown(false)}
+                                className="genre-chip text-xs inline-block"
+                              >
+                                {genre.name}
+                              </Link>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Bottom accent line */}
+                      <div
+                        className="h-0.5 w-full"
+                        style={{
+                          background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
+                          opacity: 0.5,
+                        }}
+                      />
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
           </nav>
 
           {/* Right: Search + Theme + User + Hamburger */}
           <div className="flex items-center gap-2">
             {/* Search */}
-            {searchOpen ? (
-              <form onSubmit={handleSearch} className="flex items-center">
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search manga..."
-                  className="w-40 sm:w-56 px-3 py-1.5 rounded-lg text-sm outline-none transition-all"
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--accent)',
-                    color: 'var(--text-primary)',
-                  }}
-                  onBlur={() => {
-                    if (!searchQuery) setSearchOpen(false);
-                  }}
-                />
-              </form>
-            ) : (
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all"
-              >
-                <Search size={18} />
-              </button>
-            )}
+            <AnimatePresence mode="wait">
+              {searchOpen ? (
+                <motion.form
+                  key="search-form"
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.2 }}
+                  onSubmit={handleSearch}
+                  className="flex items-center overflow-hidden"
+                >
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search manga..."
+                    className="w-40 sm:w-56 px-3 py-1.5 rounded-lg text-sm outline-none transition-all"
+                    style={{
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--accent)',
+                      color: 'var(--text-primary)',
+                      boxShadow: '0 0 15px var(--accent-glow)',
+                    }}
+                    onBlur={() => {
+                      if (!searchQuery) setSearchOpen(false);
+                    }}
+                  />
+                </motion.form>
+              ) : (
+                <motion.button
+                  key="search-btn"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setSearchOpen(true)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all"
+                >
+                  <Search size={18} />
+                </motion.button>
+              )}
+            </AnimatePresence>
 
             <div className="hidden lg:block">
               <ThemeToggle />
@@ -154,12 +218,14 @@ export function Navbar({ genres }: NavbarProps) {
               <UserMenu />
             </div>
 
-            <button
+            <motion.button
               onClick={() => setMobileOpen(true)}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               className="lg:hidden p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent)] transition-all"
             >
               <Menu size={20} />
-            </button>
+            </motion.button>
           </div>
         </div>
       </header>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { MangaGrid } from '@/components/manga/MangaGrid';
@@ -8,7 +8,7 @@ import { SearchInput } from '@/components/browse/SearchInput';
 import { useDebounce } from '@/hooks/useDebounce';
 import { searchManga, getAllGenres, type Manga, type Genre } from '@/lib/firestore';
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   const [query, setQuery] = useState(initialQuery);
@@ -84,5 +84,13 @@ export default function SearchPage() {
         )}
       </div>
     </PublicLayout>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense>
+      <SearchContent />
+    </Suspense>
   );
 }

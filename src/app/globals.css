@@ -275,3 +275,51 @@ body::before {
   from { opacity: 1; transform: translateY(0); }
   to { opacity: 0; transform: translateY(10px); }
 }
+
+/* ─── Custom Dropdown ─────────────────────────────── */
+.dropdown-trigger {
+  transition: all 0.2s ease;
+}
+.dropdown-trigger:hover {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+.dropdown-trigger:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+/* ─── Accent Lines for panels ──────────────────────── */
+.accent-line-top {
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.accent-line-bottom {
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.5;
+}
+
+/* ─── Smooth scroll for dropdown lists ─────────────── */
+.dropdown-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-muted) transparent;
+}
+.dropdown-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.dropdown-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dropdown-scroll::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 2px;
+}
+
+/* ─── Selection highlight ──────────────────────────── */
+::selection {
+  background: var(--accent-glow-strong);
+  color: var(--accent);
+}

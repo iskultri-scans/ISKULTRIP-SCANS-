@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { SearchInput } from './SearchInput';
-import { SortDropdown } from './SortDropdown';
+import { CustomDropdown, type DropdownOption } from '@/components/ui/CustomDropdown';
 import { cn } from '@/lib/utils';
+import { Clock, CheckCircle, Pause, Zap, Globe, BookOpen } from 'lucide-react';
 
 interface FilterBarProps {
   search: string;
@@ -25,11 +27,11 @@ const languageTabs = [
   { value: 'bn', label: 'BN' },
 ];
 
-const statusOptions = [
-  { value: '', label: 'All Status' },
-  { value: 'ongoing', label: 'Ongoing' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'hiatus', label: 'Hiatus' },
+const statusOptions: DropdownOption[] = [
+  { value: '', label: 'All Status', icon: <Zap size={14} /> },
+  { value: 'ongoing', label: 'Ongoing', icon: <Clock size={14} className="text-emerald-400" />, color: 'emerald' },
+  { value: 'completed', label: 'Completed', icon: <CheckCircle size={14} className="text-blue-400" />, color: 'blue' },
+  { value: 'hiatus', label: 'Hiatus', icon: <Pause size={14} className="text-amber-400" />, color: 'amber' },
 ];
 
 export function FilterBar({
@@ -45,6 +47,20 @@ export function FilterBar({
   onSortChange,
   genres,
 }: FilterBarProps) {
+  const genreOptions: DropdownOption[] = [
+    { value: '', label: 'All Genres', icon: <BookOpen size={14} /> },
+    ...genres.map((g) => ({
+      value: g.slug,
+      label: g.name,
+    })),
+  ];
+
+  const sortOptions: DropdownOption[] = [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'rating', label: 'Highest Rated' },
+    { value: 'az', label: 'A — Z' },
+  ];
+
   return (
     <div className="space-y-4 mb-6">
       {/* Search */}
@@ -53,59 +69,71 @@ export function FilterBar({
       {/* Filter Row */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Language Tabs */}
-        <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-color)' }}>
+        <div
+          className="flex rounded-xl overflow-hidden"
+          style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}
+        >
           {languageTabs.map((tab) => (
-            <button
+            <motion.button
               key={tab.value}
               onClick={() => onLanguageChange(tab.value)}
+              whileTap={{ scale: 0.95 }}
               className={cn(
-                'px-4 py-2 text-sm font-medium transition-all',
+                'px-4 py-2 text-sm font-medium transition-all duration-200 relative',
                 language === tab.value
-                  ? 'bg-[var(--accent)] text-[#0a0a0f]'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--accent)]'
+                  ? 'text-[#0a0a0f]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--accent)]'
               )}
+              style={{
+                background: language === tab.value ? 'var(--accent)' : 'transparent',
+              }}
             >
-              {tab.label}
-            </button>
+              {language === tab.value && (
+                <motion.div
+                  layoutId="language-indicator"
+                  className="absolute inset-0 rounded-lg"
+                  style={{ background: 'var(--accent)' }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <Globe size={12} />
+                {tab.label}
+              </span>
+            </motion.button>
           ))}
         </div>
 
         {/* Status Dropdown */}
-        <select
+        <CustomDropdown
+          options={statusOptions}
           value={status}
-          onChange={(e) => onStatusChange(e.target.value)}
-          className="px-3 py-2 rounded-xl text-sm outline-none cursor-pointer"
-          style={{
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-color)',
-            color: 'var(--text-primary)',
-          }}
-        >
-          {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+          onChange={onStatusChange}
+          placeholder="All Status"
+          size="sm"
+          className="w-36"
+        />
 
-        {/* Genre Select */}
-        <select
+        {/* Genre Dropdown */}
+        <CustomDropdown
+          options={genreOptions}
           value={genre}
-          onChange={(e) => onGenreChange(e.target.value)}
-          className="px-3 py-2 rounded-xl text-sm outline-none cursor-pointer"
-          style={{
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-color)',
-            color: 'var(--text-primary)',
-          }}
-        >
-          <option value="">All Genres</option>
-          {genres.map((g) => (
-            <option key={g.slug} value={g.slug}>{g.name}</option>
-          ))}
-        </select>
+          onChange={onGenreChange}
+          placeholder="All Genres"
+          size="sm"
+          className="w-40"
+        />
 
         {/* Sort */}
         <div className="ml-auto">
-          <SortDropdown value={sort} onChange={onSortChange} />
+          <CustomDropdown
+            options={sortOptions}
+            value={sort}
+            onChange={onSortChange}
+            placeholder="Sort by"
+            size="sm"
+            className="w-40"
+          />
         </div>
       </div>
     </div>

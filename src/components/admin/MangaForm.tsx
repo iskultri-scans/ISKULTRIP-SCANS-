@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { slugify } from '@/lib/utils';
+import { CustomDropdown, type DropdownOption } from '@/components/ui/CustomDropdown';
+import { Clock, CheckCircle, Pause, Globe } from 'lucide-react';
 import type { Manga } from '@/lib/firestore';
 
 interface MangaFormProps {
@@ -11,6 +14,17 @@ interface MangaFormProps {
   loading?: boolean;
   submitLabel?: string;
 }
+
+const statusOptions: DropdownOption[] = [
+  { value: 'ongoing', label: 'Ongoing', icon: <Clock size={14} className="text-emerald-400" /> },
+  { value: 'completed', label: 'Completed', icon: <CheckCircle size={14} className="text-blue-400" /> },
+  { value: 'hiatus', label: 'Hiatus', icon: <Pause size={14} className="text-amber-400" /> },
+];
+
+const languageOptions: DropdownOption[] = [
+  { value: 'en', label: 'English (EN)', icon: <Globe size={14} /> },
+  { value: 'bn', label: 'Bengali (BN)', icon: <Globe size={14} /> },
+];
 
 const defaultForm = {
   title: '',
@@ -57,7 +71,7 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
   const [form, setForm] = useState(() => buildFormFromInitial(initialData));
   const [autoSlug, setAutoSlug] = useState(() => !initialData?.slug);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm((prev) => {
       const updated = { ...prev, [name]: value };
@@ -138,22 +152,36 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
       <div>
         <label className={labelClass}>Cover Image URL *</label>
         <input name="coverImage" value={form.coverImage} onChange={handleChange} required className={inputClass} style={inputStyle} placeholder="https://..." />
-        {form.coverImage && (
-          <div className="mt-2 relative w-32 h-44 rounded-lg overflow-hidden">
-            <img src={form.coverImage} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          </div>
-        )}
+        <AnimatePresence>
+          {form.coverImage && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-2 relative w-32 h-44 rounded-lg overflow-hidden"
+            >
+              <img src={form.coverImage} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Banner Image */}
       <div>
         <label className={labelClass}>Banner Image URL</label>
         <input name="bannerImage" value={form.bannerImage} onChange={handleChange} className={inputClass} style={inputStyle} placeholder="https://..." />
-        {form.bannerImage && (
-          <div className="mt-2 relative w-full h-32 rounded-lg overflow-hidden">
-            <img src={form.bannerImage} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          </div>
-        )}
+        <AnimatePresence>
+          {form.bannerImage && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-2 relative w-full h-32 rounded-lg overflow-hidden"
+            >
+              <img src={form.bannerImage} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Genres */}
@@ -161,10 +189,12 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
         <label className={labelClass}>Genres *</label>
         <div className="flex flex-wrap gap-2">
           {genres.map((g) => (
-            <button
+            <motion.button
               key={g.slug}
               type="button"
               onClick={() => handleGenreToggle(g.name)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               className="genre-chip text-xs"
               style={{
                 borderColor: form.genres.includes(g.name) ? 'var(--accent)' : undefined,
@@ -173,7 +203,7 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
               }}
             >
               {g.name}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
@@ -190,22 +220,29 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
         </div>
       </div>
 
-      {/* Status & Language */}
+      {/* Status & Language — now using CustomDropdown */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Status *</label>
-          <select name="status" value={form.status} onChange={handleChange} className={inputClass} style={inputStyle}>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
-            <option value="hiatus">Hiatus</option>
-          </select>
+          <CustomDropdown
+            options={statusOptions}
+            value={form.status}
+            onChange={(val) => setForm((prev) => ({ ...prev, status: val }))}
+            placeholder="Select status"
+            size="md"
+            className="w-full"
+          />
         </div>
         <div>
           <label className={labelClass}>Language *</label>
-          <select name="language" value={form.language} onChange={handleChange} className={inputClass} style={inputStyle}>
-            <option value="en">EN</option>
-            <option value="bn">BN</option>
-          </select>
+          <CustomDropdown
+            options={languageOptions}
+            value={form.language}
+            onChange={(val) => setForm((prev) => ({ ...prev, language: val }))}
+            placeholder="Select language"
+            size="md"
+            className="w-full"
+          />
         </div>
       </div>
 
@@ -250,9 +287,15 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
       </div>
 
       {/* Submit */}
-      <button type="submit" disabled={loading} className="btn-accent w-full py-3 text-sm">
+      <motion.button
+        type="submit"
+        disabled={loading}
+        whileHover={{ scale: loading ? 1 : 1.02 }}
+        whileTap={{ scale: loading ? 1 : 0.98 }}
+        className="btn-accent w-full py-3 text-sm"
+      >
         {loading ? 'Saving...' : submitLabel}
-      </button>
+      </motion.button>
     </form>
   );
 }
