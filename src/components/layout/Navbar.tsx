@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Search, Menu, ChevronDown } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { MobileMenu } from './MobileMenu';
+import { UserMenu } from './UserMenu';
 import { useRouter } from 'next/navigation';
 
 interface NavbarProps {
@@ -113,7 +114,7 @@ export function Navbar({ genres }: NavbarProps) {
             </div>
           </nav>
 
-          {/* Right: Search + Theme + Hamburger */}
+          {/* Right: Search + Theme + User + Hamburger */}
           <div className="flex items-center gap-2">
             {/* Search */}
             {searchOpen ? (
@@ -146,6 +147,11 @@ export function Navbar({ genres }: NavbarProps) {
 
             <div className="hidden lg:block">
               <ThemeToggle />
+            </div>
+
+            {/* User Menu */}
+            <div className="hidden lg:block">
+              <UserMenu />
             </div>
 
             <button

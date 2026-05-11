@@ -7,8 +7,6 @@ import { MangaDetail } from '@/components/manga/MangaDetail';
 import { HeroSkeleton } from '@/components/ui/Skeleton';
 import { getMangaBySlug, getAllGenres, type Manga, type Genre } from '@/lib/firestore';
 
-export const revalidate = 3600;
-
 export default function MangaDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
@@ -25,6 +23,11 @@ export default function MangaDetailPage() {
         ]);
         setManga(mangaData);
         setGenres(genresData);
+
+        // Update page title and meta dynamically
+        if (mangaData) {
+          document.title = `${mangaData.title} — ISKULTRIP SCANS`;
+        }
       } catch (error) {
         console.error('Error fetching manga:', error);
       } finally {

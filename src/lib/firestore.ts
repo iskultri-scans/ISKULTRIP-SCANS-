@@ -10,14 +10,21 @@ import {
   where,
   orderBy,
   limit,
-  startAfter,
   Timestamp,
-  DocumentSnapshot,
   QueryConstraint,
 } from 'firebase/firestore';
 import { db } from './firebase';
 
 // Types
+export interface Chapter {
+  id: string;
+  mangaId: string;
+  title: string;
+  chapterNumber: number;
+  readLink: string;
+  createdAt: Timestamp;
+}
+
 export interface Manga {
   id: string;
   title: string;
@@ -36,6 +43,7 @@ export interface Manga {
   readLink: string;
   featured: boolean;
   trending: boolean;
+  chapters?: Chapter[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -59,13 +67,25 @@ export async function getMangaBySlug(slug: string): Promise<Manga | null> {
   const q = query(collection(db, 'manga'), where('slug', '==', slug), limit(1));
   const snap = await getDocs(q);
   if (snap.empty) return null;
-  return { id: snap.docs[0].id, ...snap.docs[0].data() } as Manga;
+  const manga = { id: snap.docs[0].id, ...snap.docs[0].data() } as Manga;
+
+  // Fetch chapters for this manga
+  const chapters = await getChaptersByMangaId(manga.id);
+  manga.chapters = chapters;
+
+  return manga;
 }
 
 export async function getMangaById(id: string): Promise<Manga | null> {
   const snap = await getDoc(doc(db, 'manga', id));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as Manga;
+  const manga = { id: snap.id, ...snap.data() } as Manga;
+
+  // Fetch chapters
+  const chapters = await getChaptersByMangaId(id);
+  manga.chapters = chapters;
+
+  return manga;
 }
 
 export async function getFeaturedManga(): Promise<Manga[]> {
@@ -97,15 +117,11 @@ export async function getMangaByLanguage(language: 'en' | 'bn', count = 10): Pro
 }
 
 export async function getMangaByGenre(genreSlug: string, constraints: QueryConstraint[] = []): Promise<Manga[]> {
-  // Firestore doesn't support "array-contains" with other inequality filters easily,
-  // so we fetch and filter client-side for genre matching
   const allGenre = await getAllManga([orderBy('updatedAt', 'desc'), ...constraints]);
   return allGenre.filter((m) => m.genres.some((g) => g.toLowerCase() === genreSlug.toLowerCase()));
 }
 
 export async function searchManga(searchTerm: string): Promise<Manga[]> {
-  // Firestore doesn't support full-text search natively
-  // We fetch recent manga and filter client-side
   const all = await getAllManga([orderBy('updatedAt', 'desc'), limit(200)]);
   const lower = searchTerm.toLowerCase();
   return all.filter(
@@ -133,7 +149,54 @@ export async function updateManga(id: string, data: Partial<Manga>): Promise<voi
 }
 
 export async function deleteManga(id: string): Promise<void> {
+  // Delete all chapters first
+  const chapters = await getChaptersByMangaId(id);
+  for (const ch of chapters) {
+    await deleteDoc(doc(db, 'manga', id, 'chapters', ch.id));
+  }
   await deleteDoc(doc(db, 'manga', id));
+}
+
+// ─── Chapter CRUD ──────────────────────────────────────────
+
+export async function getChaptersByMangaId(mangaId: string): Promise<Chapter[]> {
+  const q = query(
+    collection(db, 'manga', mangaId, 'chapters'),
+    orderBy('chapterNumber', 'desc')
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Chapter);
+}
+
+export async function addChapter(mangaId: string, data: Omit<Chapter, 'id'>): Promise<string> {
+  const docRef = await addDoc(collection(db, 'manga', mangaId, 'chapters'), {
+    ...data,
+    createdAt: Timestamp.now(),
+  });
+
+  // Update totalChapters count on the manga document
+  const chapters = await getChaptersByMangaId(mangaId);
+  await updateDoc(doc(db, 'manga', mangaId), {
+    totalChapters: chapters.length,
+    updatedAt: Timestamp.now(),
+  });
+
+  return docRef.id;
+}
+
+export async function updateChapter(mangaId: string, chapterId: string, data: Partial<Chapter>): Promise<void> {
+  await updateDoc(doc(db, 'manga', mangaId, 'chapters', chapterId), data);
+}
+
+export async function deleteChapter(mangaId: string, chapterId: string): Promise<void> {
+  await deleteDoc(doc(db, 'manga', mangaId, 'chapters', chapterId));
+
+  // Update totalChapters count
+  const chapters = await getChaptersByMangaId(mangaId);
+  await updateDoc(doc(db, 'manga', mangaId), {
+    totalChapters: chapters.length,
+    updatedAt: Timestamp.now(),
+  });
 }
 
 // ─── Genre CRUD ────────────────────────────────────────────

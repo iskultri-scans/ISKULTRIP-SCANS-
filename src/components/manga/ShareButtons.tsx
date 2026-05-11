@@ -1,15 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Facebook, MessageCircle, Copy, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Facebook, MessageCircle, Copy, Check, Send, Share2 } from 'lucide-react';
 
 interface ShareButtonsProps {
   title: string;
   slug: string;
+  description?: string;
+  coverImage?: string;
 }
 
-export function ShareButtons({ title, slug }: ShareButtonsProps) {
+export function ShareButtons({ title, slug, description, coverImage }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const pageUrl = `https://iskultrip.com/manga/${slug}`;
 
   const shareFacebook = () => {
@@ -28,6 +32,14 @@ export function ShareButtons({ title, slug }: ShareButtonsProps) {
     );
   };
 
+  const shareTelegram = () => {
+    window.open(
+      `https://t.me/share/url?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(title + (description ? '\n\n' + description.slice(0, 200) : ''))}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  };
+
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(pageUrl);
@@ -38,30 +50,98 @@ export function ShareButtons({ title, slug }: ShareButtonsProps) {
     }
   };
 
+  // Native share API for mobile
+  const nativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: description || `Read ${title} on ISKULTRIP SCANS`,
+          url: pageUrl,
+        });
+      } catch {
+        // User cancelled
+      }
+    } else {
+      setShowMore(!showMore);
+    }
+  };
+
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm font-medium text-[var(--text-secondary)]">Share:</span>
-      <button
-        onClick={shareFacebook}
-        className="p-2.5 rounded-lg text-[var(--text-secondary)] hover:text-blue-400 hover:bg-blue-400/10 transition-all"
-        aria-label="Share on Facebook"
-      >
-        <Facebook size={18} />
-      </button>
-      <button
-        onClick={shareWhatsApp}
-        className="p-2.5 rounded-lg text-[var(--text-secondary)] hover:text-emerald-400 hover:bg-emerald-400/10 transition-all"
-        aria-label="Share on WhatsApp"
-      >
-        <MessageCircle size={18} />
-      </button>
-      <button
-        onClick={copyLink}
-        className="p-2.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all"
-        aria-label="Copy link"
-      >
-        {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} />}
-      </button>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium text-[var(--text-secondary)]">Share:</span>
+
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={shareFacebook}
+          className="p-2.5 rounded-xl text-[var(--text-secondary)] hover:text-blue-400 hover:bg-blue-400/10 transition-all"
+          aria-label="Share on Facebook"
+        >
+          <Facebook size={18} />
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={shareWhatsApp}
+          className="p-2.5 rounded-xl text-[var(--text-secondary)] hover:text-emerald-400 hover:bg-emerald-400/10 transition-all"
+          aria-label="Share on WhatsApp"
+        >
+          <MessageCircle size={18} />
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={shareTelegram}
+          className="p-2.5 rounded-xl text-[var(--text-secondary)] hover:text-sky-400 hover:bg-sky-400/10 transition-all"
+          aria-label="Share on Telegram"
+        >
+          <Send size={18} />
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={copyLink}
+          className="p-2.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all"
+          aria-label="Copy link"
+        >
+          <AnimatePresence mode="wait">
+            {copied ? (
+              <motion.div
+                key="check"
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                exit={{ scale: 0, rotate: 180 }}
+              >
+                <Check size={18} className="text-emerald-400" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="copy"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+              >
+                <Copy size={18} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={nativeShare}
+          className="p-2.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all"
+          aria-label="More sharing options"
+        >
+          <Share2 size={18} />
+        </motion.button>
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { MangaForm } from '@/components/admin/MangaForm';
+import { ChapterManager } from '@/components/admin/ChapterManager';
 import { getMangaById, updateManga, getAllGenres, type Genre, type Manga } from '@/lib/firestore';
 import { useToast } from '@/components/ui/Toast';
 
@@ -78,16 +79,22 @@ export default function EditMangaPage() {
   }
 
   return (
-    <div>
-      <AdminHeader title="Edit Manga" subtitle={`Editing: ${manga.title}`} />
+    <div className="space-y-8">
+      <div>
+        <AdminHeader title="Edit Manga" subtitle={`Editing: ${manga.title}`} />
+        <MangaForm
+          initialData={manga}
+          onSubmit={handleSubmit}
+          genres={genres.map((g) => ({ name: g.name, slug: g.slug }))}
+          loading={loading}
+          submitLabel="Save Changes"
+        />
+      </div>
 
-      <MangaForm
-        initialData={manga}
-        onSubmit={handleSubmit}
-        genres={genres.map((g) => ({ name: g.name, slug: g.slug }))}
-        loading={loading}
-        submitLabel="Save Changes"
-      />
+      {/* Chapter Manager */}
+      <div className="pt-6 border-t" style={{ borderColor: 'var(--border-color)' }}>
+        <ChapterManager mangaId={id} mangaTitle={manga.title || ''} />
+      </div>
     </div>
   );
 }

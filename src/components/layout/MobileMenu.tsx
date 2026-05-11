@@ -2,8 +2,10 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { X, Home, BookOpen, Tag, Search, Shield } from 'lucide-react';
+import { X, Home, BookOpen, Tag, Search, Shield, LogIn, LogOut } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { UserMenu } from './UserMenu';
+import { useAuth } from '@/context/AuthContext';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -12,6 +14,8 @@ interface MobileMenuProps {
 }
 
 export function MobileMenu({ isOpen, onClose, genres }: MobileMenuProps) {
+  const { user, isAdmin, signOut } = useAuth();
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -78,10 +82,32 @@ export function MobileMenu({ isOpen, onClose, genres }: MobileMenuProps) {
             ))}
           </div>
 
+          {/* Admin link - only for admins */}
+          {user && isAdmin && (
+            <div className="pt-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
+              <Link href="/admin" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-lg text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all">
+                <Shield size={18} /> Admin Panel
+              </Link>
+            </div>
+          )}
+
+          {/* Auth section */}
           <div className="pt-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
-            <Link href="/admin" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all">
-              <Shield size={18} /> Admin
-            </Link>
+            {user ? (
+              <div className="px-3 py-2">
+                <p className="text-sm font-medium text-[var(--text-primary)] truncate">{user.displayName || user.email}</p>
+                <button
+                  onClick={async () => { await signOut(); onClose(); }}
+                  className="flex items-center gap-2 mt-2 text-sm text-red-400 hover:text-red-300"
+                >
+                  <LogOut size={14} /> Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link href="/login" onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all">
+                <LogIn size={18} /> Login / Sign Up
+              </Link>
+            )}
           </div>
         </nav>
 
