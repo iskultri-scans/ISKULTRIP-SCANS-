@@ -34,3 +34,31 @@ Stage Summary:
 - Admin panel with brute-force login protection
 - Responsive design with 2-5 column grids
 - Dev server running successfully on port 3000
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Add Bookmark/Favorite feature to ISKULTRIP SCANS
+
+Work Log:
+- Added bookmark Firestore functions to firestore.ts: BookmarkData type, addBookmark, removeBookmark, getUserBookmarks, isBookmarked, getBookmarkedManga
+- Created BookmarkContext.tsx: Global bookmark state with Firestore sync for logged-in users and localStorage fallback for guests
+- Created BookmarkButton.tsx component: Three variants (overlay, button, icon), animated bookmark icon with spring rotation
+- Updated MangaCard.tsx: Added BookmarkButton overlay variant at top-right of cover image
+- Updated MangaDetail.tsx: Added BookmarkButton button variant next to Read Now and Share buttons
+- Created /bookmarks page: Full bookmark management page with grid layout, remove button per card, empty state with CTA
+- Updated layout.tsx: Added BookmarkProvider wrapping ToastProvider
+- Updated Navbar.tsx: Added Bookmarks nav link with bookmark count badge
+- Updated MobileMenu.tsx: Added Bookmarks menu item with badge count
+- Updated UserMenu.tsx: Added My Bookmarks link in dropdown menu
+- Updated Footer.tsx: Added Bookmarks to Quick Links section
+- Final build: All routes compile successfully
+
+Stage Summary:
+- Bookmark feature fully implemented with Firestore + localStorage dual storage
+- 3 variants of BookmarkButton: overlay (cards), button (detail page), icon (generic)
+- Global state via BookmarkContext shared across all components
+- Toast notifications on bookmark add/remove
+- Bookmark count badge shown in Navbar and MobileMenu
+- Guest users can bookmark (stored in localStorage), prompted to login for sync
+- Build passes cleanly

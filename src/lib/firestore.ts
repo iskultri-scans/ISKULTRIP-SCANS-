@@ -4,6 +4,7 @@ import {
   getDoc,
   getDocs,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -225,6 +226,72 @@ export async function updateGenre(id: string, data: Partial<Genre>): Promise<voi
 
 export async function deleteGenre(id: string): Promise<void> {
   await deleteDoc(doc(db, 'genres', id));
+}
+
+// ─── Bookmarks ─────────────────────────────────────────────
+
+export interface BookmarkData {
+  mangaId: string;
+  title: string;
+  titleBn?: string;
+  slug: string;
+  coverImage: string;
+  rating: number;
+  status: 'ongoing' | 'completed' | 'hiatus';
+  totalChapters: number;
+  language: 'en' | 'bn';
+  genres: string[];
+  bookmarkedAt: Timestamp;
+}
+
+export async function addBookmark(userId: string, manga: Manga): Promise<void> {
+  const bookmarkRef = doc(db, 'users', userId, 'bookmarks', manga.id);
+  await setDoc(bookmarkRef, {
+    mangaId: manga.id,
+    title: manga.title,
+    titleBn: manga.titleBn || null,
+    slug: manga.slug,
+    coverImage: manga.coverImage,
+    rating: manga.rating,
+    status: manga.status,
+    totalChapters: manga.totalChapters,
+    language: manga.language,
+    genres: manga.genres,
+    bookmarkedAt: Timestamp.now(),
+  }, { merge: true });
+}
+
+export async function removeBookmark(userId: string, mangaId: string): Promise<void> {
+  await deleteDoc(doc(db, 'users', userId, 'bookmarks', mangaId));
+}
+
+export async function getUserBookmarks(userId: string): Promise<BookmarkData[]> {
+  const q = query(
+    collection(db, 'users', userId, 'bookmarks'),
+    orderBy('bookmarkedAt', 'desc')
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ mangaId: d.id, ...d.data() }) as BookmarkData);
+}
+
+export async function isBookmarked(userId: string, mangaId: string): Promise<boolean> {
+  const snap = await getDoc(doc(db, 'users', userId, 'bookmarks', mangaId));
+  return snap.exists();
+}
+
+export async function getBookmarkedManga(userId: string): Promise<Manga[]> {
+  const bookmarks = await getUserBookmarks(userId);
+  const mangaList: Manga[] = [];
+
+  for (const bm of bookmarks) {
+    const snap = await getDoc(doc(db, 'manga', bm.mangaId));
+    if (snap.exists()) {
+      const manga = { id: snap.id, ...snap.data() } as Manga;
+      mangaList.push(manga);
+    }
+  }
+
+  return mangaList;
 }
 
 // ─── Stats ─────────────────────────────────────────────────

@@ -3,18 +3,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Menu, ChevronDown, Facebook, Send } from 'lucide-react';
+import { Search, Menu, ChevronDown, Facebook, Send, Bookmark } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { MobileMenu } from './MobileMenu';
 import { UserMenu } from './UserMenu';
 import { useRouter } from 'next/navigation';
 import { SITE_CONFIG } from '@/lib/config';
+import { useBookmarks } from '@/context/BookmarkContext';
 
 interface NavbarProps {
   genres: { name: string; slug: string }[];
 }
 
 export function Navbar({ genres }: NavbarProps) {
+  const { bookmarkCount } = useBookmarks();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -83,6 +85,22 @@ export function Navbar({ genres }: NavbarProps) {
             </Link>
             <Link href="/browse" className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">
               Browse
+            </Link>
+            <Link href="/bookmarks" className="flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors relative">
+              <Bookmark size={14} />
+              Bookmarks
+              {bookmarkCount > 0 && (
+                <span
+                  className="ml-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold px-1"
+                  style={{
+                    background: 'var(--accent)',
+                    color: '#0a0a0f',
+                    boxShadow: '0 0 8px var(--accent-glow)',
+                  }}
+                >
+                  {bookmarkCount}
+                </span>
+              )}
             </Link>
             <div className="relative" ref={dropdownRef}>
               <motion.button

@@ -9,6 +9,8 @@ import { GenreTags } from './GenreTags';
 import { ReadNowButton } from './ReadNowButton';
 import { ShareButtons } from './ShareButtons';
 import { ChapterList } from './ChapterList';
+import { BookmarkButton } from './BookmarkButton';
+import { useBookmarks } from '@/context/BookmarkContext';
 import { formatRelativeTime } from '@/lib/utils';
 import type { Manga } from '@/lib/firestore';
 
@@ -22,6 +24,9 @@ const fadeUp = {
 };
 
 export function MangaDetail({ manga }: MangaDetailProps) {
+  const { isBookmarked, toggleBookmark } = useBookmarks();
+  const bookmarked = isBookmarked(manga.id);
+
   return (
     <div>
       {/* Banner Image */}
@@ -159,7 +164,7 @@ export function MangaDetail({ manga }: MangaDetailProps) {
           </div>
         </motion.div>
 
-        {/* Read Now + Share */}
+        {/* Read Now + Bookmark + Share */}
         <motion.div
           variants={fadeUp}
           initial="initial"
@@ -168,6 +173,14 @@ export function MangaDetail({ manga }: MangaDetailProps) {
           className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4"
         >
           <ReadNowButton readLink={manga.readLink} />
+          <BookmarkButton
+            manga={manga}
+            isBookmarked={bookmarked}
+            onToggle={toggleBookmark}
+            variant="button"
+            size={18}
+            showLabel={true}
+          />
           <ShareButtons
             title={manga.title}
             slug={manga.slug}

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, LogIn, Shield, LogOut, ChevronDown } from 'lucide-react';
+import { User, LogIn, Shield, LogOut, ChevronDown, Bookmark } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export function UserMenu() {
@@ -102,11 +102,26 @@ export function UserMenu() {
 
               {/* Menu Items */}
               <div className="p-1.5">
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.05, duration: 0.15 }}
+                >
+                  <Link
+                    href="/bookmarks"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all"
+                  >
+                    <Bookmark size={15} />
+                    My Bookmarks
+                  </Link>
+                </motion.div>
+
                 {isAdmin && (
                   <motion.div
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.05, duration: 0.15 }}
+                    transition={{ delay: 0.1, duration: 0.15 }}
                   >
                     <Link
                       href="/admin"
@@ -122,7 +137,7 @@ export function UserMenu() {
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: isAdmin ? 0.1 : 0.05, duration: 0.15 }}
+                  transition={{ delay: isAdmin ? 0.15 : 0.1, duration: 0.15 }}
                 >
                   <button
                     onClick={async () => {

@@ -64,6 +64,7 @@ export function Footer({ genres }: FooterProps) {
             <ul className="space-y-2">
               <li><Link href="/" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Home</Link></li>
               <li><Link href="/browse" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Browse</Link></li>
+              <li><Link href="/bookmarks" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Bookmarks</Link></li>
               <li><Link href="/search" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Search</Link></li>
               <li><Link href="/dmca" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">DMCA</Link></li>
             </ul>

@@ -3,9 +3,10 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Home, BookOpen, Tag, Search, Shield, LogIn, LogOut, Facebook, Send } from 'lucide-react';
+import { X, Home, BookOpen, Tag, Search, Shield, LogIn, LogOut, Facebook, Send, Bookmark } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
+import { useBookmarks } from '@/context/BookmarkContext';
 import { SITE_CONFIG } from '@/lib/config';
 
 interface MobileMenuProps {
@@ -16,6 +17,7 @@ interface MobileMenuProps {
 
 export function MobileMenu({ isOpen, onClose, genres }: MobileMenuProps) {
   const { user, isAdmin, signOut } = useAuth();
+  const { bookmarkCount } = useBookmarks();
 
   useEffect(() => {
     if (isOpen) {
@@ -29,9 +31,10 @@ export function MobileMenu({ isOpen, onClose, genres }: MobileMenuProps) {
   }, [isOpen]);
 
   const menuItems = [
-    { href: '/', icon: <Home size={18} />, label: 'Home' },
-    { href: '/browse', icon: <BookOpen size={18} />, label: 'Browse' },
-    { href: '/search', icon: <Search size={18} />, label: 'Search' },
+    { href: '/', icon: <Home size={18} />, label: 'Home', badge: null },
+    { href: '/browse', icon: <BookOpen size={18} />, label: 'Browse', badge: null },
+    { href: '/bookmarks', icon: <Bookmark size={18} />, label: 'Bookmarks', badge: bookmarkCount > 0 ? bookmarkCount : null },
+    { href: '/search', icon: <Search size={18} />, label: 'Search', badge: null },
   ];
 
   return (
@@ -108,6 +111,18 @@ export function MobileMenu({ isOpen, onClose, genres }: MobileMenuProps) {
                       {item.icon}
                     </motion.span>
                     {item.label}
+                    {item.badge && (
+                      <span
+                        className="ml-auto min-w-[20px] h-[20px] flex items-center justify-center rounded-full text-[10px] font-bold px-1.5"
+                        style={{
+                          background: 'var(--accent)',
+                          color: '#0a0a0f',
+                          boxShadow: '0 0 8px var(--accent-glow)',
+                        }}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
                   </Link>
                 </motion.div>
               ))}

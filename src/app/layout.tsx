@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { BookmarkProvider } from '@/context/BookmarkContext';
 import { ToastProvider } from '@/components/ui/Toast';
 
 export const metadata: Metadata = {
@@ -48,9 +49,11 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col" style={{ fontFamily: "'DM Sans', sans-serif" }}>
         <ThemeProvider>
           <AuthProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
+            <BookmarkProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </BookmarkProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
