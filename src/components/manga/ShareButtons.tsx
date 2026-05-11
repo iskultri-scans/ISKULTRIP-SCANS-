@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Facebook, MessageCircle, Copy, Check, Send, Share2 } from 'lucide-react';
+import { SITE_CONFIG } from '@/lib/config';
 
 interface ShareButtonsProps {
   title: string;
@@ -14,7 +15,7 @@ interface ShareButtonsProps {
 export function ShareButtons({ title, slug, description, coverImage }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
   const [showMore, setShowMore] = useState(false);
-  const pageUrl = `https://iskultrip.com/manga/${slug}`;
+  const pageUrl = `${SITE_CONFIG.url}/manga/${slug}`;
 
   const shareFacebook = () => {
     window.open(

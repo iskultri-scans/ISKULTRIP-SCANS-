@@ -1,68 +1,94 @@
-'use client';
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import { getAdminApp } from '@/lib/firebase-admin';
+import { SITE_CONFIG } from '@/lib/config';
+import { MangaDetailClient } from './MangaDetailClient';
 
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { PublicLayout } from '@/components/layout/PublicLayout';
-import { MangaDetail } from '@/components/manga/MangaDetail';
-import { HeroSkeleton } from '@/components/ui/Skeleton';
-import { getMangaBySlug, getAllGenres, type Manga, type Genre } from '@/lib/firestore';
+// Server-side: fetch manga data for metadata using Admin SDK
+async function getMangaForMetadata(slug: string) {
+  try {
+    const adminApp = getAdminApp();
+    const adminDb = adminApp.firestore();
 
-export default function MangaDetailPage() {
-  const params = useParams();
-  const slug = params.slug as string;
-  const [manga, setManga] = useState<Manga | null>(null);
-  const [genres, setGenres] = useState<Genre[]>([]);
-  const [loading, setLoading] = useState(true);
+    const snapshot = await adminDb
+      .collection('manga')
+      .where('slug', '==', slug)
+      .limit(1)
+      .get();
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [mangaData, genresData] = await Promise.all([
-          getMangaBySlug(slug),
-          getAllGenres(),
-        ]);
-        setManga(mangaData);
-        setGenres(genresData);
+    if (snapshot.empty) return null;
 
-        // Update page title and meta dynamically
-        if (mangaData) {
-          document.title = `${mangaData.title} — ISKULTRIP SCANS`;
-        }
-      } catch (error) {
-        console.error('Error fetching manga:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, [slug]);
-
-  const genreSlugs = genres.map((g) => ({ name: g.name, slug: g.slug }));
-
-  if (loading) {
-    return (
-      <PublicLayout genres={genreSlugs}>
-        <HeroSkeleton />
-      </PublicLayout>
-    );
+    const doc = snapshot.docs[0];
+    return {
+      id: doc.id,
+      ...doc.data(),
+    } as Record<string, unknown>;
+  } catch (error) {
+    console.error('Server-side manga fetch error:', error);
+    return null;
   }
+}
+
+// Generate dynamic metadata for OG previews (Telegram, Facebook, Twitter)
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const manga = await getMangaForMetadata(slug);
 
   if (!manga) {
-    return (
-      <PublicLayout genres={genreSlugs}>
-        <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-          <h1 className="font-['Bebas_Neue'] text-4xl text-[var(--text-primary)] mb-4">Manga Not Found</h1>
-          <p className="text-[var(--text-secondary)]">The manga you are looking for does not exist.</p>
-        </div>
-      </PublicLayout>
-    );
+    return {
+      title: 'Manga Not Found — ISKULTRIP SCANS',
+    };
   }
 
-  return (
-    <PublicLayout genres={genreSlugs}>
-      <div className="pb-12">
-        <MangaDetail manga={manga} />
-      </div>
-    </PublicLayout>
-  );
+  const title = (manga.title as string) || 'Manga';
+  const description = (manga.description as string) || `Read ${title} on ISKULTRIP SCANS`;
+  const coverImage = (manga.coverImage as string) || '/og-default.png';
+  const pageUrl = `${SITE_CONFIG.url}/manga/${slug}`;
+  const titleBn = manga.titleBn as string | undefined;
+
+  return {
+    title: `${title} — ISKULTRIP SCANS`,
+    description: description.slice(0, 200),
+    openGraph: {
+      title: titleBn ? `${title} (${titleBn})` : title,
+      description: description.slice(0, 200),
+      url: pageUrl,
+      siteName: 'ISKULTRIP SCANS',
+      images: [
+        {
+          url: coverImage,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: title,
+      description: description.slice(0, 200),
+      images: [coverImage],
+    },
+  };
+}
+
+// Server component wrapper
+export default async function MangaDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const manga = await getMangaForMetadata(slug);
+
+  if (!manga) {
+    notFound();
+  }
+
+  return <MangaDetailClient slug={slug} />;
 }

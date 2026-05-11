@@ -62,3 +62,38 @@ Stage Summary:
 - Bookmark count badge shown in Navbar and MobileMenu
 - Guest users can bookmark (stored in localStorage), prompted to login for sync
 - Build passes cleanly
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Firebase setup, Telegram OG preview, demo data, Vercel deployment prep
+
+Work Log:
+- Verified all Firebase credentials in .env.local (all 13 variables present and correct)
+- Admin email already set: bongmanga.official@gmail.com
+- Firebase Admin SDK verification: Firestore accessible, Auth accessible, 0 manga docs
+- Fixed ShareButtons.tsx: Replaced hardcoded URL with SITE_CONFIG.url for dynamic sharing links
+- Refactored manga/[slug]/page.tsx from 'use client' to server component with generateMetadata for OG previews
+  - Created MangaDetailClient.tsx for client-side interactivity
+  - Server component fetches manga via Firebase Admin SDK
+  - generateMetadata outputs full OpenGraph + Twitter Card meta tags (title, description, cover image, URL)
+  - Telegram and Facebook link previews now show manga cover, title, and synopsis
+- Created scripts/seed-manga.js with env loader for .env.local
+  - 18 demo genres (Action, Adventure, Comedy, Drama, Fantasy, etc.)
+  - 8 demo manga (Solo Leveling, One Piece, Jujutsu Kaisen, Chainsaw Man, Spy x Family, Demon Slayer, Tower of God, Bengali Folk Tales)
+  - Demo chapters for each manga (2-8 chapters per manga)
+  - Auto-updates genre manga counts
+  - Successfully seeded all demo data to Firestore
+- Created scripts/verify-firebase.js for Firebase setup verification
+- Updated next.config.ts: Removed output: "standalone" (not needed for Vercel)
+- Updated package.json: Simplified build script (removed standalone copy commands)
+- Created VERCEL_DEPLOY.md with step-by-step deployment guide
+- Final build: All 16 routes compile successfully
+
+Stage Summary:
+- Firebase fully configured and verified (all credentials, Admin SDK, Auth, Firestore)
+- Telegram/Facebook OG rich previews now work via server-side generateMetadata
+- Demo data seeded: 8 manga, 28 chapters, 18 genres
+- ShareButtons uses dynamic SITE_CONFIG.url instead of hardcoded domain
+- Vercel deployment ready with comprehensive guide
+- Build passes cleanly
