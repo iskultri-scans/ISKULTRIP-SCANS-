@@ -1,253 +1,216 @@
-# 🔥 ISKULTRIP SCANS — Firebase সেটআপ গাইড
-
-## ধাপে ধাপে Firebase সেটআপ নির্দেশনা
-
----
+# 🔥 ISKULTRIP SCANS — Firebase Setup Guide
 
 ## ধাপ ১: Firebase প্রজেক্ট তৈরি করুন
 
-1. **Firebase Console-এ যান:** https://console.firebase.google.com/
-2. **"Create a project"** বাটনে ক্লিক করুন
-3. **Project name:** `iskultrip-scans` লিখুন (অথবা আপনার পছন্দের নাম)
-4. **"Continue"** ক্লিক করুন
-5. Google Analytics এনাবল করতে চাইলে টিক দিন, না চাইলে ডিসেবল করুন
-6. **"Create project"** ক্লিক করুন এবং অপেক্ষা করুন
+1. **[Firebase Console](https://console.firebase.google.com/)** এ যান
+2. **"Create a project"** বা **"Add project"** এ ক্লিক করুন
+3. Project name দিন: `iskultrip-scans`
+4. Google Analytics চালু রাখুন (recommended)
+5. **"Create project"** এ ক্লিক করুন এবং অপেক্ষা করুন
 
 ---
 
-## ধাপ ২: Authentication সেটআপ করুন
+## ধাপ ২: Web App যোগ করুন (Client SDK এর জন্য)
 
-1. Firebase Console-এর বাম পাশে **"Authentication"** এ ক্লিক করুন
-2. **"Get started"** বাটনে ক্লিক করুন
-3. **Sign-in method** ট্যাবে যান এবং নিচেরগুলো এনাবল করুন:
+1. Firebase Console এ আপনার প্রজেক্ট ওপেন করুন
+2. বামে **⚙️ Gear icon → Project Settings** এ যান
+3. নিচে **"Your apps"** সেকশনে **🌐 Web icon (`</>`)** এ ক্লিক করুন
+4. App nickname দিন: `ISKULTRIP SCANS Web`
+5. **"Register app"** এ ক্লিক করুন
+6. **Firebase SDK এর কনফিগ কোডটি কপি করুন** — এটা এমন দেখাবে:
 
-### Email/Password:
-- **"Email/Password"** এ ক্লিক করুন
-- **"Enable"** টগল অন করুন
-- **"Save"** ক্লিক করুন
+```javascript
+const firebaseConfig = {
+  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  authDomain: "iskultrip-scans.firebaseapp.com",
+  projectId: "iskultrip-scans",
+  storageBucket: "iskultrip-scans.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abcdef1234567890",
+  measurementId: "G-XXXXXXXXXX"
+};
+```
 
-### Google:
-- **"Google"** এ ক্লিক করুন
-- **"Enable"** টগল অন করুন
-- **Project support email** সিলেক্ট করুন
-- **"Save"** ক্লিক করুন
+### এই ভ্যালুগুলো `.env.local` ফাইলে বসান:
 
-### অ্যাডমিন ইমেইল সেট করুন:
-- **Authentication → Users** ট্যাবে যান
-- **"Add user"** ক্লিক করুন
-- আপনার অ্যাডমিন ইমেইল ও পাসওয়ার্ড দিন (যেমন: `youradmin@gmail.com`)
-- **"Add user"** ক্লিক করুন
-- এই ইমেইলটি `.env.local` এ `NEXT_PUBLIC_ADMIN_EMAIL` এ দিন
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=iskultrip-scans.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=iskultrip-scans
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=iskultrip-scans.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789012
+NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789012:web:abcdef1234567890
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
+```
 
 ---
 
-## ধাপ ৩: Firestore Database সেটআপ করুন
+## ধাপ ৩: Authentication চালু করুন
 
-1. Firebase Console-এর বাম পাশে **"Firestore Database"** এ ক্লিক করুন
-2. **"Create database"** ক্লিক করুন
-3. **"Start in production mode"** সিলেক্ট করুন (পরে নিয়ম যোগ করব)
-4. **Location:** `asia-south1` (ঢাকার জন্য) অথবা আপনার কাছের লোকেশন সিলেক্ট করুন
-5. **"Done"** ক্লিক করুন
+1. Firebase Console এ **"Authentication"** (Build → Authentication) এ যান
+2. **"Get started"** এ ক্লিক করুন
+3. **Sign-in method** ট্যাবে যান এবং এইগুলো চালু করুন:
+   - ✅ **Email/Password** — Enable করুন
+   - ✅ **Google** — Enable করুন (Support email সিলেক্ট করুন)
+4. **"Save"** এ ক্লিক করুন
+
+---
+
+## ধাপ ৪: Firestore Database তৈরি করুন
+
+1. Firebase Console এ **"Firestore Database"** (Build → Firestore Database) এ যান
+2. **"Create database"** এ ক্লিক করুন
+3. **"Start in test mode"** সিলেক্ট করুন (পরে rules পরিবর্তন করব)
+4. Location সিলেক্ট করুন: `asia-southeast1` (বাংলাদেশ/ভারতের কাছে)
+5. **"Done"** এ ক্লিক করুন
 
 ### Firestore Security Rules সেট করুন:
-1. **"Rules"** ট্যাবে যান
-2. নিচের নিয়মগুলো পেস্ট করুন:
+
+**Firestore Database → Rules ট্যাবে** যান এবং এই rules পেস্ট করুন:
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // পাবলিক রিড — যেকোনো মাঙ্গা/জেনার পড়তে পারবে
+
+    // Anyone can read manga and genres
     match /manga/{mangaId} {
       allow read: if true;
-      allow write: if request.auth != null &&
-        request.auth.token.email == "YOUR_ADMIN_EMAIL@gmail.com";
+      allow write: if request.auth != null
+        && request.auth.token.email == '<YOUR_ADMIN_EMAIL>';
 
+      // Chapters subcollection
       match /chapters/{chapterId} {
         allow read: if true;
-        allow write: if request.auth != null &&
-          request.auth.token.email == "YOUR_ADMIN_EMAIL@gmail.com";
+        allow write: if request.auth != null
+          && request.auth.token.email == '<YOUR_ADMIN_EMAIL>';
       }
     }
 
+    // Anyone can read genres
     match /genres/{genreId} {
       allow read: if true;
-      allow write: if request.auth != null &&
-        request.auth.token.email == "YOUR_ADMIN_EMAIL@gmail.com";
+      allow write: if request.auth != null
+        && request.auth.token.email == '<YOUR_ADMIN_EMAIL>';
+    }
+
+    // Users can only access their own bookmarks
+    match /users/{userId}/bookmarks/{bookmarkId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
     }
   }
 }
 ```
 
-3. **"Publish"** ক্লিক করুন
-4. ⚠️ **`YOUR_ADMIN_EMAIL@gmail.com`** আপনার আসল অ্যাডমিন ইমেইল দিয়ে রিপ্লেস করুন!
+> ⚠️ `<YOUR_ADMIN_EMAIL>` এর জায়গায় আপনার অ্যাডমিন ইমেইল বসান!
+
+**"Publish"** এ ক্লিক করুন।
 
 ---
 
-## ধাপ ৪: Firebase Web App রেজিস্টার করুন (Client SDK)
+## ধাপ ৫: Admin SDK এর জন্য Service Account Key ডাউনলোড করুন
 
-1. Firebase Console-এর উপরে বাম পাশে **⚙️ Settings** → **"Project settings"**
-2. নিচে **"Your apps"** সেকশনে **Web আইকন** `</>` তে ক্লিক করুন
-3. **App nickname:** `iskultrip-web` লিখুন
-4. **"Register app"** ক্লিক করুন
-5. ফায়ারবেস কনফিগ কোড দেখাবে — এটি কপি করুন, পরে লাগবে
-6. **"Continue to console"** ক্লিক করুন
+1. Firebase Console এ **⚙️ Gear → Project Settings** এ যান
+2. **"Service Accounts"** ট্যাবে যান
+3. **"Generate new private key"** বাটনে ক্লিক করুন
+4. JSON ফাইল ডাউনলোড হবে — এটি খুলুন
+
+### এই ফাইল থেকে ভ্যালুগুলো `.env.local` এ বসান:
+
+JSON ফাইলে এমন ডেটা থাকবে:
+```json
+{
+  "type": "service_account",
+  "project_id": "iskultrip-scans",
+  "private_key_id": "...",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-xxxxx@iskultrip-scans.iam.gserviceaccount.com",
+  ...
+}
+```
+
+`.env.local` এ বসান:
+```
+FIREBASE_ADMIN_PROJECT_ID=iskultrip-scans
+FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-xxxxx@iskultrip-scans.iam.gserviceaccount.com
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END PRIVATE KEY-----\n"
+```
+
+> ⚠️ `FIREBASE_ADMIN_PRIVATE_KEY` অবশ্যই double quotes (`"`) এর মধ্যে রাখুন!
 
 ---
 
-## ধাপ ৫: Firebase Admin SDK সেটআপ করুন (Server-side)
+## ধাপ ৬: Admin Email সেট করুন
 
-1. **⚙️ Project settings** → **"Service accounts"** ট্যাবে যান
-2. **"Generate new private key"** বাটনে ক্লিক করুন
-3. **"Generate key"** কনফার্ম করুন — একটি JSON ফাইল ডাউনলোড হবে
-4. এই ফাইলটি **খুবই গোপনীয়** — কাউকে দেবেন না, Git-এ আপলোড করবেন না!
-5. ফাইলটি খুলুন এবং নিচের তিনটি মান কপি করুন:
-   - `project_id` → এটি হবে `FIREBASE_ADMIN_PROJECT_ID`
-   - `client_email` → এটি হবে `FIREBASE_ADMIN_CLIENT_EMAIL`
-   - `private_key` → এটি হবে `FIREBASE_ADMIN_PRIVATE_KEY`
+আপনি যে ইমেইল দিয়ে Admin Panel অ্যাক্সেস করতে চান সেটা দিন:
+
+```
+NEXT_PUBLIC_ADMIN_EMAIL=your-email@gmail.com
+```
 
 ---
 
-## ধাপ ৬: `.env.local` ফাইল আপডেট করুন
+## ধাপ ৭: Social Links সেট করুন
 
-প্রজেক্টের `.env.local` ফাইল খুলুন এবং সব মান পূরণ করুন:
+```
+NEXT_PUBLIC_SITE_URL=https://iskultrip.com
+NEXT_PUBLIC_FACEBOOK_URL=https://facebook.com/iskultripscans
+NEXT_PUBLIC_TELEGRAM_URL=https://t.me/iskultripscans
+```
+
+---
+
+## ধাপ ৮: সম্পূর্ণ `.env.local` ফাইল
+
+সব মিলিয়ে আপনার `.env.local` ফাইল দেখতে এমন হবে:
 
 ```env
-# Firebase Client SDK (ধাপ ৪ থেকে পাওয়া মানগুলো)
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyB...আপনার-API-KEY
+# Firebase Client SDK
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyXXXXXXXXXXXXXX
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=iskultrip-scans.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=iskultrip-scans
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=iskultrip-scans.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
-NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abc123
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789012
+NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789012:web:abcdef1234567890
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
 
-# Firebase Admin SDK (ধাপ ৫ থেকে পাওয়া মানগুলো)
+# Firebase Admin SDK
 FIREBASE_ADMIN_PROJECT_ID=iskultrip-scans
 FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-xxxxx@iskultrip-scans.iam.gserviceaccount.com
 FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END PRIVATE KEY-----\n"
 
-# অ্যাডমিন অ্যাক্সেস (আপনার অ্যাডমিন ইমেইল)
-NEXT_PUBLIC_ADMIN_EMAIL=youradmin@gmail.com
+# Admin
+NEXT_PUBLIC_ADMIN_EMAIL=your-email@gmail.com
 
-# সোশ্যাল লিংক
+# Social Links
+NEXT_PUBLIC_SITE_URL=https://iskultrip.com
 NEXT_PUBLIC_FACEBOOK_URL=https://facebook.com/iskultripscans
 NEXT_PUBLIC_TELEGRAM_URL=https://t.me/iskultripscans
-NEXT_PUBLIC_SITE_URL=https://iskultrip.com
-```
-
-⚠️ **গুরুত্বপূর্ণ:**
-- `FIREBASE_ADMIN_PRIVATE_KEY` অবশ্যই ডাবল কোটেশন `"` দিয়ে রাখতে হবে
-- `\n` গুলো অবশ্যই রাখতে হবে, সরাবেন না
-- এই ফাইলটি Git-এ commit করবেন না (`.gitignore`-এ যোগ করা আছে)
-
----
-
-## ধাপ ৭: Firestore ইনডেক্স তৈরি করুন
-
-কিছু কোয়েরির জন্য Firestore ইনডেক্স প্রয়োজন। প্রথমবার ওয়েবসাইট চালানোর সময় কনসোলে ইনডেক্স তৈরির লিংক আসতে পারে — সেই লিংকে ক্লিক করে ইনডেক্স তৈরি করুন।
-
-অথবা আগে থেকেই তৈরি করতে পারেন:
-
-1. **Firestore Database → Indexes** ট্যাবে যান
-2. **"Create index"** ক্লিক করুন
-3. নিচের ইনডেক্সগুলো তৈরি করুন:
-
-| Collection | Fields | Type |
-|-----------|--------|------|
-| manga | `featured` (Ascending) + `updatedAt` (Descending) | Collection |
-| manga | `trending` (Ascending) + `rating` (Descending) | Collection |
-| manga | `language` (Ascending) + `updatedAt` (Descending) | Collection |
-| manga | `slug` (Ascending) | Collection |
-| manga | `createdAt` (Descending) | Collection |
-| genres | `name` (Ascending) | Collection |
-| manga/{mangaId}/chapters | `chapterNumber` (Descending) | Collection |
-
----
-
-## ধাপ ৮: ডেমো ডাটা সিড করুন
-
-1. টার্মিনাল খুলুন এবং প্রজেক্ট ফোল্ডারে যান:
-```bash
-cd /path/to/iskultrip-scans
-```
-
-2. সিড স্ক্রিপ্ট চালান:
-```bash
-node scripts/seed.js
-```
-
-3. আউটপুট দেখবেন:
-```
-🌱 Starting database seeding...
-📁 Seeding genres...
-  ✅ Added 18 genres
-
-📚 Seeding manga...
-  ✅ "One Piece" — 12 chapters
-  ✅ "Attack on Titan" — 8 chapters
-  ✅ "Jujutsu Kaisen" — 6 chapters
-  ...
-
-🎉 Seeding complete! Your website is ready to preview.
 ```
 
 ---
 
-## ধাপ ৯: ওয়েবসাইট চালু করুন
+## ধাপ ৯: প্রথম Admin Account তৈরি করুন
 
-```bash
-# ডেভেলপমেন্ট মোড
-npm run dev
-
-# অথবা
-bun dev
-```
-
-ব্রাউজারে http://localhost:3000 যান।
+1. সাইট চালু করুন: `npm run dev`
+2. `/login` পেজে যান
+3. আপনার **admin email** দিয়ে **Sign Up** করুন
+4. এখন `/admin/login` এ যান এবং লগইন করুন
+5. Admin Panel অ্যাক্সেস পাবেন! ✅
 
 ---
 
-## ধাপ ১০: অ্যাডমিন প্যানেল অ্যাক্সেস করুন
+## 📋 সংক্ষেপে কী কী লাগবে:
 
-1. http://localhost:3000/login যান
-2. আপনার অ্যাডমিন ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন
-3. লগইন করলে নেভবারে **"Admin Panel"** অপশন দেখা যাবে
-4. সেখান থেকে মাঙ্গা, চ্যাপ্টার, জেনার ম্যানেজ করতে পারবেন
+| ক্রম | কী লাগবে | কোথায় পাবেন |
+|------|----------|--------------|
+| 1 | Firebase Project | [console.firebase.google.com](https://console.firebase.google.com/) |
+| 2 | Web App Config (6টি ভ্যালু) | Project Settings → Your apps |
+| 3 | Authentication চালু | Build → Authentication → Sign-in method |
+| 4 | Firestore Database | Build → Firestore Database → Create |
+| 5 | Service Account Key (3টি ভ্যালু) | Project Settings → Service Accounts |
+| 6 | Admin Email | আপনার নিজের ইমেইল |
+| 7 | Social Links | আপনার Facebook/Telegram লিংক |
 
----
-
-## ✅ চেকলিস্ট
-
-- [ ] Firebase প্রজেক্ট তৈরি হয়েছে
-- [ ] Authentication এনাবল করা হয়েছে (Email/Password + Google)
-- [ ] অ্যাডমিন ইমেইল/পাসওয়ার্ড তৈরি করা হয়েছে
-- [ ] Firestore Database তৈরি হয়েছে (production mode)
-- [ ] Firestore Security Rules সেট করা হয়েছে
-- [ ] Web App রেজিস্টার করা হয়েছে (Client SDK config পাওয়া গেছে)
-- [ ] Service Account Key জেনারেট করা হয়েছে (Admin SDK)
-- [ ] `.env.local` ফাইল সব মান দিয়ে আপডেট করা হয়েছে
-- [ ] Firestore ইনডেক্স তৈরি করা হয়েছে
-- [ ] ডেমো ডাটা সিড করা হয়েছে (`node scripts/seed.js`)
-- [ ] ওয়েবসাইট চালু হচ্ছে
-- [ ] অ্যাডমিন প্যানেল অ্যাক্সেস পাচ্ছেন
-
----
-
-## 🔧 সমস্যা সমাধান
-
-### "Missing or insufficient permissions" এরর
-- Firestore Security Rules ঠিকমতো সেট হয়েছে কিনা চেক করুন
-- আপনার অ্যাডমিন ইমেইল Rules-এ ঠিকমতো দেওয়া আছে কিনা দেখুন
-
-### "Firebase: Error (auth/invalid-api-key)"
-- `.env.local` এ API key ঠিকমতো দেওয়া আছে কিনা চেক করুন
-- সার্ভার রিস্টার্ট করুন (`Ctrl+C` তারপর `npm run dev`)
-
-### Admin Panel দেখা যাচ্ছে না
-- অ্যাডমিন ইমেইল দিয়ে লগইন করেছেন কিনা নিশ্চিত হন
-- `NEXT_PUBLIC_ADMIN_EMAIL` ঠিকমতো সেট আছে কিনা চেক করুন
-- ব্রাউজারে লগআউট করে আবার লগইন করুন
-
-### Firestore ইনডেক্স এরর
-- ব্রাউজার কনসোলে ইরর লিংক আসলে সেই লিংকে ক্লিক করুন
-- ইনডেক্স তৈরি হতে কয়েক মিনিট লাগতে পারে
+**মোট 13টি environment variable** লাগবে `.env.local` ফাইলে।
