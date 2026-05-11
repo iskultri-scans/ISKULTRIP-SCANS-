@@ -77,13 +77,13 @@ service cloud.firestore {
     match /manga/{mangaId} {
       allow read: if true;
       allow write: if request.auth != null
-        && request.auth.token.email == '<YOUR_ADMIN_EMAIL>';
+        && request.auth.token.email == 'bongmanga.official@gmail.com';
 
       // Chapters subcollection
       match /chapters/{chapterId} {
         allow read: if true;
         allow write: if request.auth != null
-          && request.auth.token.email == '<YOUR_ADMIN_EMAIL>';
+          && request.auth.token.email == 'bongmanga.official@gmail.com';
       }
     }
 
@@ -91,7 +91,7 @@ service cloud.firestore {
     match /genres/{genreId} {
       allow read: if true;
       allow write: if request.auth != null
-        && request.auth.token.email == '<YOUR_ADMIN_EMAIL>';
+        && request.auth.token.email == 'bongmanga.official@gmail.com';
     }
 
     // Users can only access their own bookmarks
@@ -103,7 +103,7 @@ service cloud.firestore {
 }
 ```
 
-> ⚠️ `<YOUR_ADMIN_EMAIL>` এর জায়গায় আপনার অ্যাডমিন ইমেইল বসান!
+> ✅ Admin email: `bongmanga.official@gmail.com` — ইতিমধ্যে সেট করা আছে!
 
 **"Publish"** এ ক্লিক করুন।
 
