@@ -3,9 +3,10 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Home, BookOpen, Tag, Search, Shield, LogIn, LogOut } from 'lucide-react';
+import { X, Home, BookOpen, Tag, Search, Shield, LogIn, LogOut, Facebook, Send } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
+import { SITE_CONFIG } from '@/lib/config';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -140,6 +141,49 @@ export function MobileMenu({ isOpen, onClose, genres }: MobileMenuProps) {
                   </motion.div>
                 ))}
               </div>
+
+              {/* Social Join Section */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4, duration: 0.2 }}
+                className="pt-3 border-t"
+                style={{ borderColor: 'var(--border-color)' }}
+              >
+                <span className="flex items-center gap-2 px-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                  Join Us
+                </span>
+                <div className="flex gap-2 px-3">
+                  <a
+                    href={SITE_CONFIG.social.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={onClose}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all hover:scale-105"
+                    style={{
+                      background: 'linear-gradient(135deg, #1877F2, #0d5bbd)',
+                      color: '#ffffff',
+                    }}
+                  >
+                    <Facebook size={14} />
+                    Facebook
+                  </a>
+                  <a
+                    href={SITE_CONFIG.social.telegram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={onClose}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all hover:scale-105"
+                    style={{
+                      background: 'linear-gradient(135deg, #0088cc, #006699)',
+                      color: '#ffffff',
+                    }}
+                  >
+                    <Send size={14} />
+                    Telegram
+                  </a>
+                </div>
+              </motion.div>
 
               {/* Admin link - only for admins */}
               {user && isAdmin && (

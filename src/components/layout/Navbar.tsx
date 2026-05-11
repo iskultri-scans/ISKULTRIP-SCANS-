@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Menu, ChevronDown } from 'lucide-react';
+import { Search, Menu, ChevronDown, Facebook, Send } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { MobileMenu } from './MobileMenu';
 import { UserMenu } from './UserMenu';
 import { useRouter } from 'next/navigation';
+import { SITE_CONFIG } from '@/lib/config';
 
 interface NavbarProps {
   genres: { name: string; slug: string }[];
@@ -161,8 +162,37 @@ export function Navbar({ genres }: NavbarProps) {
             </div>
           </nav>
 
-          {/* Right: Search + Theme + User + Hamburger */}
+          {/* Right: Social + Search + Theme + User + Hamburger */}
           <div className="flex items-center gap-2">
+            {/* Social Links */}
+            <div className="hidden md:flex items-center gap-1">
+              <motion.a
+                href={SITE_CONFIG.social.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[#1877F2] hover:bg-[#1877F2]/10 transition-all"
+                aria-label="Join Facebook"
+              >
+                <Facebook size={16} />
+              </motion.a>
+              <motion.a
+                href={SITE_CONFIG.social.telegram}
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[#0088cc] hover:bg-[#0088cc]/10 transition-all"
+                aria-label="Join Telegram"
+              >
+                <Send size={16} />
+              </motion.a>
+            </div>
+
+            {/* Divider */}
+            <div className="hidden md:block w-px h-4" style={{ background: 'var(--border-color)' }} />
+
             {/* Search */}
             <AnimatePresence mode="wait">
               {searchOpen ? (
