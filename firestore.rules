@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Anyone can read manga and genres
+    match /manga/{mangaId} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.token.email == 'your-email@gmail.com';
+
+      // Chapters subcollection
+      match /chapters/{chapterId} {
+        allow read: if true;
+        allow write: if request.auth != null
+          && request.auth.token.email == 'your-email@gmail.com';
+      }
+    }
+
+    // Anyone can read genres
+    match /genres/{genreId} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.token.email == 'your-email@gmail.com';
+    }
+
+    // Users can only access their own bookmarks
+    match /users/{userId}/bookmarks/{bookmarkId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+  }
+}

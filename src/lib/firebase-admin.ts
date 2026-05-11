@@ -12,10 +12,21 @@ export function getAdminApp(): admin.app.App {
 
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  let privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
 
   if (!projectId || !clientEmail || !privateKey) {
     throw new Error('Missing Firebase Admin SDK environment variables');
+  }
+
+  // Handle private key formatting for Vercel and local dev
+  // Vercel sometimes stores newlines as literal \n
+  if (privateKey.includes('\\n')) {
+    privateKey = privateKey.replace(/\\n/g, '\n');
+  }
+
+  // Ensure the key starts and ends correctly
+  if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+    throw new Error('Invalid Firebase Admin private key format');
   }
 
   adminApp = admin.initializeApp({

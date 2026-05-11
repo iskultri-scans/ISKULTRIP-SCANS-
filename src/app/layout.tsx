@@ -17,6 +17,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip.vercel.app'),
   title: 'ISKULTRIP SCANS — Your Gateway to Manga',
   description: 'Browse manga information, discover new series, and find your next favorite read. ISKULTRIP SCANS by MD MEHADI HASAN.',
   manifest: '/manifest.json',
