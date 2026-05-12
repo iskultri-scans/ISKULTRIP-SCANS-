@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Clock } from 'lucide-react';
 import { MangaGrid } from '@/components/manga/MangaGrid';
 import { formatRelativeTime } from '@/lib/utils';
@@ -29,7 +30,7 @@ export function LatestUpdates({ manga, loading = false }: LatestUpdatesProps) {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {manga.map((m, i) => (
             <div key={m.id} className="manga-card" style={{ animationDelay: `${i * 50}ms` }}>
-              <a href={`/manga/${m.slug}`} className="block rounded-xl overflow-hidden relative" style={{ background: 'var(--bg-card)' }}>
+              <Link href={`/manga/${m.slug}`} className="block rounded-xl overflow-hidden relative" style={{ background: 'var(--bg-card)' }}>
                 <div className="manga-card-inner">
                   {/* Cover */}
                   <div className="relative" style={{ aspectRatio: '3/4' }}>
@@ -48,7 +49,7 @@ export function LatestUpdates({ manga, loading = false }: LatestUpdatesProps) {
                     <p className="text-xs text-[var(--accent)]">{formatRelativeTime(m.createdAt)}</p>
                   </div>
                 </div>
-              </a>
+              </Link>
             </div>
           ))}
         </div>

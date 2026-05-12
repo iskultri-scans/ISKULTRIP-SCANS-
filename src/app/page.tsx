@@ -25,26 +25,23 @@ export default function HomePage() {
   const [featured, setFeatured] = useState<Manga[]>([]);
   const [trending, setTrending] = useState<Manga[]>([]);
   const [latest, setLatest] = useState<Manga[]>([]);
-  const [enManga, setEnManga] = useState<Manga[]>([]);
   const [bnManga, setBnManga] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [genresData, featuredData, trendingData, latestData, enData, bnData] = await Promise.all([
+        const [genresData, featuredData, trendingData, latestData, bnData] = await Promise.all([
           getAllGenres(),
           getFeaturedManga(),
           getTrendingManga(),
           getLatestManga(10),
-          getMangaByLanguage('en', 10),
           getMangaByLanguage('bn', 10),
         ]);
         setGenres(genresData);
         setFeatured(featuredData);
         setTrending(trendingData);
         setLatest(latestData);
-        setEnManga(enData);
         setBnManga(bnData);
       } catch (error) {
         console.error('Error fetching home data:', error);
@@ -141,7 +138,7 @@ export default function HomePage() {
         </motion.section>
 
         {/* Language Sections */}
-        <LanguageSection enManga={enManga} bnManga={bnManga} loading={loading} />
+        <LanguageSection bnManga={bnManga} loading={loading} />
       </div>
     </PublicLayout>
   );

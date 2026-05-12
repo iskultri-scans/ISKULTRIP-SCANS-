@@ -64,7 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
             <ThemeToggle />
           </div>
-          <div className="p-6 max-w-6xl">
+          <div className="p-6 max-w-6xl pb-20 lg:pb-6">
             {children}
           </div>
         </div>
