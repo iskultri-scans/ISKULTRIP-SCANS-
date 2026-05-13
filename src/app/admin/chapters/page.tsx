@@ -8,6 +8,7 @@ import {
   getChaptersByMangaId,
   addChapter,
   deleteChapter,
+  addNotification,
   type Manga,
   type Chapter,
 } from '@/lib/firestore';
@@ -135,6 +136,24 @@ export default function AdminChaptersPage() {
         readLink: chapterLink,
         createdAt: Timestamp.now(),
       });
+
+      // Create notification for new chapter
+      try {
+        const title = selectedManga.title;
+        const titleBn = selectedManga.titleBn;
+        await addNotification({
+          title: `New Chapter: ${title} Ch.${chapterNumber}`,
+          titleBn: titleBn ? `নতুন চ্যাপ্টার: ${titleBn} অধ্যায় ${chapterNumber}` : undefined,
+          message: `Chapter ${chapterNumber} of ${title} is now available!`,
+          messageBn: titleBn ? `${titleBn} এর অধ্যায় ${chapterNumber} এখন উপলব্ধ!` : undefined,
+          type: 'new_chapter',
+          mangaSlug: selectedManga.slug,
+          createdAt: Timestamp.now(),
+        });
+      } catch (notifError) {
+        console.error('Failed to create notification:', notifError);
+      }
+
       showToast(`Chapter ${chapterNumber} added!`, 'success');
       setChapterNumber('');
       setChapterTitle('');

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { MangaForm } from '@/components/admin/MangaForm';
-import { addManga, getAllGenres, type Genre } from '@/lib/firestore';
+import { addManga, getAllGenres, addNotification, type Genre } from '@/lib/firestore';
 import { useToast } from '@/components/ui/Toast';
 import { Timestamp } from 'firebase/firestore';
 
@@ -41,6 +41,26 @@ export default function AddMangaPage() {
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       });
+
+      // Create notification for new manga
+      try {
+        const title = data.title as string;
+        const titleBn = (data.titleBn as string) || undefined;
+        const slug = data.slug as string;
+        await addNotification({
+          title: `New Manga: ${title}`,
+          titleBn: titleBn ? `নতুন মাঙ্গা: ${titleBn}` : undefined,
+          message: `${title} has been added to the directory!`,
+          messageBn: titleBn ? `${titleBn} ডিরেক্টরিতে যোগ হয়েছে!` : undefined,
+          type: 'new_manga',
+          mangaSlug: slug,
+          createdAt: Timestamp.now(),
+        });
+      } catch (notifError) {
+        console.error('Failed to create notification:', notifError);
+        // Don't fail the main operation
+      }
+
       showToast('Manga added successfully!', 'success');
       router.push('/admin/manga');
     } catch (error) {
