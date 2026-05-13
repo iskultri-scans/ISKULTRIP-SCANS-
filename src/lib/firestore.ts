@@ -56,65 +56,152 @@ export interface Genre {
   mangaCount: number;
 }
 
+// ─── Announcement Types ────────────────────────────────────
+export interface Announcement {
+  id: string;
+  title: string;
+  titleBn?: string;
+  content: string;
+  contentBn?: string;
+  type: 'announcement' | 'upcoming' | 'update';
+  mangaId?: string;
+  coverImage?: string;
+  releaseDate?: Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// ─── Notification Types ────────────────────────────────────
+export interface Notification {
+  id: string;
+  title: string;
+  titleBn?: string;
+  message: string;
+  messageBn?: string;
+  type: 'new_manga' | 'new_chapter' | 'announcement';
+  mangaId?: string;
+  mangaSlug?: string;
+  createdAt: Timestamp;
+}
+
+// ─── Upcoming Release Types ────────────────────────────────
+export interface UpcomingRelease {
+  id: string;
+  title: string;
+  titleBn?: string;
+  mangaId?: string;
+  mangaSlug?: string;
+  coverImage?: string;
+  releaseDate: Timestamp;
+  description?: string;
+  createdAt: Timestamp;
+}
+
+// ─── Request Types ─────────────────────────────────────────
+export interface MangaRequest {
+  id: string;
+  mangaTitle: string;
+  mangaTitleBn?: string;
+  description: string;
+  requestedBy: string;
+  status: 'pending' | 'approved' | 'completed' | 'rejected';
+  upvotes: number;
+  upvotedBy: string[];
+  adminNote?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 // ─── Manga CRUD ────────────────────────────────────────────
 
 export async function getAllManga(constraints: QueryConstraint[] = []): Promise<Manga[]> {
-  const q = query(collection(db, 'manga'), ...constraints);
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Manga);
+  try {
+    const q = query(collection(db, 'manga'), ...constraints);
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Manga);
+  } catch (error) {
+    console.error('Error fetching manga:', error);
+    return [];
+  }
 }
 
 export async function getMangaBySlug(slug: string): Promise<Manga | null> {
-  const q = query(collection(db, 'manga'), where('slug', '==', slug), limit(1));
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-  const manga = { id: snap.docs[0].id, ...snap.docs[0].data() } as Manga;
+  try {
+    const q = query(collection(db, 'manga'), where('slug', '==', slug), limit(1));
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    const manga = { id: snap.docs[0].id, ...snap.docs[0].data() } as Manga;
 
-  // Fetch chapters for this manga
-  const chapters = await getChaptersByMangaId(manga.id);
-  manga.chapters = chapters;
+    // Fetch chapters for this manga
+    const chapters = await getChaptersByMangaId(manga.id);
+    manga.chapters = chapters;
 
-  return manga;
+    return manga;
+  } catch (error) {
+    console.error('Error fetching manga by slug:', error);
+    return null;
+  }
 }
 
 export async function getMangaById(id: string): Promise<Manga | null> {
-  const snap = await getDoc(doc(db, 'manga', id));
-  if (!snap.exists()) return null;
-  const manga = { id: snap.id, ...snap.data() } as Manga;
+  try {
+    const snap = await getDoc(doc(db, 'manga', id));
+    if (!snap.exists()) return null;
+    const manga = { id: snap.id, ...snap.data() } as Manga;
 
-  // Fetch chapters
-  const chapters = await getChaptersByMangaId(id);
-  manga.chapters = chapters;
+    // Fetch chapters
+    const chapters = await getChaptersByMangaId(id);
+    manga.chapters = chapters;
 
-  return manga;
+    return manga;
+  } catch (error) {
+    console.error('Error fetching manga by id:', error);
+    return null;
+  }
 }
 
+// FIX: Avoid composite index - use only orderBy, filter client-side
 export async function getFeaturedManga(): Promise<Manga[]> {
-  return getAllManga([
-    where('featured', '==', true),
-    orderBy('updatedAt', 'desc'),
-    limit(10),
-  ]);
+  try {
+    // Fetch manga ordered by updatedAt (single-field index only)
+    const allManga = await getAllManga([orderBy('updatedAt', 'desc'), limit(50)]);
+    // Filter featured client-side
+    return allManga.filter((m) => m.featured === true).slice(0, 10);
+  } catch (error) {
+    console.error('Error fetching featured manga:', error);
+    return [];
+  }
 }
 
+// FIX: Avoid composite index - use only orderBy, filter client-side
 export async function getTrendingManga(): Promise<Manga[]> {
-  return getAllManga([
-    where('trending', '==', true),
-    orderBy('rating', 'desc'),
-    limit(20),
-  ]);
+  try {
+    // Fetch manga ordered by rating (single-field index only)
+    const allManga = await getAllManga([orderBy('rating', 'desc'), limit(50)]);
+    // Filter trending client-side
+    return allManga.filter((m) => m.trending === true).slice(0, 20);
+  } catch (error) {
+    console.error('Error fetching trending manga:', error);
+    return [];
+  }
 }
 
+// This one only uses orderBy - no composite index needed
 export async function getLatestManga(count = 20): Promise<Manga[]> {
   return getAllManga([orderBy('createdAt', 'desc'), limit(count)]);
 }
 
+// FIX: Avoid composite index - use only orderBy, filter client-side
 export async function getMangaByLanguage(language: 'en' | 'bn', count = 10): Promise<Manga[]> {
-  return getAllManga([
-    where('language', '==', language),
-    orderBy('updatedAt', 'desc'),
-    limit(count),
-  ]);
+  try {
+    // Fetch latest manga ordered by updatedAt (single-field index only)
+    const allManga = await getAllManga([orderBy('updatedAt', 'desc'), limit(50)]);
+    // Filter by language client-side
+    return allManga.filter((m) => m.language === language).slice(0, count);
+  } catch (error) {
+    console.error('Error fetching manga by language:', error);
+    return [];
+  }
 }
 
 export async function getMangaByGenre(genreSlug: string, constraints: QueryConstraint[] = []): Promise<Manga[]> {
@@ -161,12 +248,17 @@ export async function deleteManga(id: string): Promise<void> {
 // ─── Chapter CRUD ──────────────────────────────────────────
 
 export async function getChaptersByMangaId(mangaId: string): Promise<Chapter[]> {
-  const q = query(
-    collection(db, 'manga', mangaId, 'chapters'),
-    orderBy('chapterNumber', 'desc')
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Chapter);
+  try {
+    const q = query(
+      collection(db, 'manga', mangaId, 'chapters'),
+      orderBy('chapterNumber', 'desc')
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Chapter);
+  } catch (error) {
+    console.error('Error fetching chapters:', error);
+    return [];
+  }
 }
 
 export async function addChapter(mangaId: string, data: Omit<Chapter, 'id'>): Promise<string> {
@@ -203,16 +295,26 @@ export async function deleteChapter(mangaId: string, chapterId: string): Promise
 // ─── Genre CRUD ────────────────────────────────────────────
 
 export async function getAllGenres(): Promise<Genre[]> {
-  const q = query(collection(db, 'genres'), orderBy('name', 'asc'));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Genre);
+  try {
+    const q = query(collection(db, 'genres'), orderBy('name', 'asc'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Genre);
+  } catch (error) {
+    console.error('Error fetching genres:', error);
+    return [];
+  }
 }
 
 export async function getGenreBySlug(slug: string): Promise<Genre | null> {
-  const q = query(collection(db, 'genres'), where('slug', '==', slug), limit(1));
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-  return { id: snap.docs[0].id, ...snap.docs[0].data() } as Genre;
+  try {
+    const q = query(collection(db, 'genres'), where('slug', '==', slug), limit(1));
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    return { id: snap.docs[0].id, ...snap.docs[0].data() } as Genre;
+  } catch (error) {
+    console.error('Error fetching genre by slug:', error);
+    return null;
+  }
 }
 
 export async function addGenre(data: Omit<Genre, 'id'>): Promise<string> {
@@ -306,4 +408,182 @@ export async function getStats() {
     completed: allManga.filter((m) => m.status === 'completed').length,
     recent: allManga.slice(0, 5),
   };
+}
+
+// ─── Announcements / Blog ──────────────────────────────────
+
+export async function addAnnouncement(data: Omit<Announcement, 'id'>): Promise<string> {
+  const docRef = await addDoc(collection(db, 'announcements'), {
+    ...data,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  });
+  return docRef.id;
+}
+
+export async function getAllAnnouncements(): Promise<Announcement[]> {
+  try {
+    const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Announcement);
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    return [];
+  }
+}
+
+export async function getAnnouncementById(id: string): Promise<Announcement | null> {
+  try {
+    const snap = await getDoc(doc(db, 'announcements', id));
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() } as Announcement;
+  } catch (error) {
+    console.error('Error fetching announcement:', error);
+    return null;
+  }
+}
+
+export async function updateAnnouncement(id: string, data: Partial<Announcement>): Promise<void> {
+  await updateDoc(doc(db, 'announcements', id), {
+    ...data,
+    updatedAt: Timestamp.now(),
+  });
+}
+
+export async function deleteAnnouncement(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'announcements', id));
+}
+
+export async function getLatestAnnouncements(count = 5): Promise<Announcement[]> {
+  try {
+    const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(count));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Announcement);
+  } catch (error) {
+    console.error('Error fetching latest announcements:', error);
+    return [];
+  }
+}
+
+// ─── Notifications ─────────────────────────────────────────
+
+export async function addNotification(data: Omit<Notification, 'id'>): Promise<string> {
+  const docRef = await addDoc(collection(db, 'notifications'), {
+    ...data,
+    createdAt: Timestamp.now(),
+  });
+  return docRef.id;
+}
+
+export async function getNotifications(count = 20): Promise<Notification[]> {
+  try {
+    const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(count));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Notification);
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    return [];
+  }
+}
+
+export async function deleteNotification(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'notifications', id));
+}
+
+// ─── Upcoming Releases ─────────────────────────────────────
+
+export async function addUpcomingRelease(data: Omit<UpcomingRelease, 'id'>): Promise<string> {
+  const docRef = await addDoc(collection(db, 'upcomingReleases'), {
+    ...data,
+    createdAt: Timestamp.now(),
+  });
+  return docRef.id;
+}
+
+export async function getUpcomingReleases(): Promise<UpcomingRelease[]> {
+  try {
+    // Fetch all ordered by releaseDate, filter client-side for future dates
+    const q = query(collection(db, 'upcomingReleases'), orderBy('releaseDate', 'asc'), limit(20));
+    const snap = await getDocs(q);
+    const now = Date.now();
+    return snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }) as UpcomingRelease)
+      .filter((r) => r.releaseDate.toMillis() > now);
+  } catch (error) {
+    console.error('Error fetching upcoming releases:', error);
+    return [];
+  }
+}
+
+export async function deleteUpcomingRelease(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'upcomingReleases', id));
+}
+
+export async function getAllUpcomingReleases(): Promise<UpcomingRelease[]> {
+  try {
+    const q = query(collection(db, 'upcomingReleases'), orderBy('releaseDate', 'asc'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as UpcomingRelease);
+  } catch (error) {
+    console.error('Error fetching all upcoming releases:', error);
+    return [];
+  }
+}
+
+// ─── User Requests ─────────────────────────────────────────
+
+export async function addRequest(data: Omit<MangaRequest, 'id'>): Promise<string> {
+  const docRef = await addDoc(collection(db, 'requests'), {
+    ...data,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  });
+  return docRef.id;
+}
+
+export async function getAllRequests(): Promise<MangaRequest[]> {
+  try {
+    const q = query(collection(db, 'requests'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as MangaRequest);
+  } catch (error) {
+    console.error('Error fetching requests:', error);
+    return [];
+  }
+}
+
+export async function updateRequest(id: string, data: Partial<MangaRequest>): Promise<void> {
+  await updateDoc(doc(db, 'requests', id), {
+    ...data,
+    updatedAt: Timestamp.now(),
+  });
+}
+
+export async function deleteRequest(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'requests', id));
+}
+
+export async function upvoteRequest(id: string, userId: string): Promise<void> {
+  const reqDoc = doc(db, 'requests', id);
+  const snap = await getDoc(reqDoc);
+  if (!snap.exists()) return;
+
+  const data = snap.data() as MangaRequest;
+  const upvotedBy = data.upvotedBy || [];
+
+  if (upvotedBy.includes(userId)) {
+    // Remove upvote
+    await updateDoc(reqDoc, {
+      upvotes: Math.max(0, (data.upvotes || 0) - 1),
+      upvotedBy: upvotedBy.filter((u) => u !== userId),
+      updatedAt: Timestamp.now(),
+    });
+  } else {
+    // Add upvote
+    await updateDoc(reqDoc, {
+      upvotes: (data.upvotes || 0) + 1,
+      upvotedBy: [...upvotedBy, userId],
+      updatedAt: Timestamp.now(),
+    });
+  }
 }

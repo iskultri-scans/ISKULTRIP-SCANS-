@@ -13,10 +13,13 @@ export function LanguageSection({ bnManga, loading = false }: LanguageSectionPro
   return (
     <div className="py-4">
       <section>
-        <h2 className="font-['Bebas_Neue'] text-2xl tracking-wide text-[var(--text-primary)] mb-6">
-          বাংলা মাঙ্গা
-        </h2>
-        <MangaGrid manga={bnManga} loading={loading} emptyTitle="No Bengali manga yet" />
+        <div className="flex items-center gap-3 mb-6">
+          <h2 className="font-['Bebas_Neue'] text-2xl tracking-wide text-[var(--text-primary)]">
+            বাংলা মাঙ্গা
+          </h2>
+          <span className="text-sm text-[var(--text-muted)]">— Bengali Manga</span>
+        </div>
+        <MangaGrid manga={bnManga} loading={loading} emptyTitle="এখনো বাংলা মাঙ্গা নেই / No Bengali manga yet" />
       </section>
     </div>
   );

@@ -109,7 +109,7 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
   const labelClass = "block text-sm font-medium text-[var(--text-secondary)] mb-1.5";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl">
+    <form onSubmit={handleSubmit} className="space-y-5 w-full max-w-full sm:max-w-2xl">
       {/* Title EN */}
       <div>
         <label className={labelClass}>Title (EN) *</label>
@@ -184,32 +184,34 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
         </AnimatePresence>
       </div>
 
-      {/* Genres */}
+      {/* Genres - scrollable container on mobile */}
       <div>
         <label className={labelClass}>Genres *</label>
-        <div className="flex flex-wrap gap-2">
-          {genres.map((g) => (
-            <motion.button
-              key={g.slug}
-              type="button"
-              onClick={() => handleGenreToggle(g.name)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="genre-chip text-xs"
-              style={{
-                borderColor: form.genres.includes(g.name) ? 'var(--accent)' : undefined,
-                background: form.genres.includes(g.name) ? 'var(--accent-glow)' : undefined,
-                color: form.genres.includes(g.name) ? 'var(--accent)' : undefined,
-              }}
-            >
-              {g.name}
-            </motion.button>
-          ))}
+        <div className="max-h-48 overflow-y-auto">
+          <div className="flex flex-wrap gap-2">
+            {genres.map((g) => (
+              <motion.button
+                key={g.slug}
+                type="button"
+                onClick={() => handleGenreToggle(g.name)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="genre-chip text-xs"
+                style={{
+                  borderColor: form.genres.includes(g.name) ? 'var(--accent)' : undefined,
+                  background: form.genres.includes(g.name) ? 'var(--accent-glow)' : undefined,
+                  color: form.genres.includes(g.name) ? 'var(--accent)' : undefined,
+                }}
+              >
+                {g.name}
+              </motion.button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Author & Artist */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Author & Artist - responsive grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Author</label>
           <input name="author" value={form.author} onChange={handleChange} className={inputClass} style={inputStyle} />
@@ -220,8 +222,8 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
         </div>
       </div>
 
-      {/* Status & Language — now using CustomDropdown */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Status & Language — now using CustomDropdown, responsive grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Status *</label>
           <CustomDropdown
@@ -246,8 +248,8 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
         </div>
       </div>
 
-      {/* Rating & Chapters */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Rating & Chapters - responsive grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Rating (0-10)</label>
           <input name="rating" type="number" min="0" max="10" step="0.1" value={form.rating} onChange={handleChange} className={inputClass} style={inputStyle} />
@@ -265,7 +267,7 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
       </div>
 
       {/* Checkboxes */}
-      <div className="flex gap-6">
+      <div className="flex flex-wrap gap-4 sm:gap-6">
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"

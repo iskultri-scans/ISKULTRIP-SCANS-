@@ -7,6 +7,7 @@ import { Search, Menu, ChevronDown, Facebook, Send, Bookmark } from 'lucide-reac
 import { ThemeToggle } from './ThemeToggle';
 import { MobileMenu } from './MobileMenu';
 import { UserMenu } from './UserMenu';
+import { NotificationBell } from './NotificationBell';
 import { useRouter } from 'next/navigation';
 import { SITE_CONFIG } from '@/lib/config';
 import { useBookmarks } from '@/context/BookmarkContext';
@@ -102,6 +103,12 @@ export function Navbar({ genres }: NavbarProps) {
                 </span>
               )}
             </Link>
+            <Link href="/blog" className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">
+              Blog
+            </Link>
+            <Link href="/requests" className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">
+              Requests
+            </Link>
             <div className="relative" ref={dropdownRef}>
               <motion.button
                 onClick={() => setGenreDropdown(!genreDropdown)}
@@ -180,7 +187,7 @@ export function Navbar({ genres }: NavbarProps) {
             </div>
           </nav>
 
-          {/* Right: Social + Search + Theme + User + Hamburger */}
+          {/* Right: Social + Notification + Search + Theme + User + Hamburger */}
           <div className="flex items-center gap-2">
             {/* Social Links */}
             <div className="hidden md:flex items-center gap-1">
@@ -210,6 +217,11 @@ export function Navbar({ genres }: NavbarProps) {
 
             {/* Divider */}
             <div className="hidden md:block w-px h-4" style={{ background: 'var(--border-color)' }} />
+
+            {/* Notification Bell */}
+            <div className="hidden sm:block">
+              <NotificationBell />
+            </div>
 
             {/* Search */}
             <AnimatePresence mode="wait">

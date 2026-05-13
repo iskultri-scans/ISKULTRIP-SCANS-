@@ -4,6 +4,8 @@ import { getAdminApp } from '@/lib/firebase-admin';
 import { SITE_CONFIG } from '@/lib/config';
 import { MangaDetailClient } from './MangaDetailClient';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip-scans.vercel.app';
+
 // Server-side: fetch manga data for metadata using Admin SDK
 async function getMangaForMetadata(slug: string) {
   try {
@@ -29,6 +31,13 @@ async function getMangaForMetadata(slug: string) {
   }
 }
 
+// Helper: ensure absolute URL for images (Facebook/Twitter crawlers need absolute URLs)
+function ensureAbsoluteUrl(url: string | undefined): string {
+  if (!url) return `${SITE_URL}/og-default.png`;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `${SITE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 // Generate dynamic metadata for OG previews (Telegram, Facebook, Twitter)
 export async function generateMetadata({
   params,
@@ -46,15 +55,15 @@ export async function generateMetadata({
 
   const title = (manga.title as string) || 'Manga';
   const description = (manga.description as string) || `Read ${title} on ISKULTRIP SCANS`;
-  const coverImage = (manga.coverImage as string) || '/og-default.png';
-  const pageUrl = `${SITE_CONFIG.url}/manga/${slug}`;
+  const coverImage = ensureAbsoluteUrl(manga.coverImage as string | undefined);
+  const pageUrl = `${SITE_URL}/manga/${slug}`;
   const titleBn = manga.titleBn as string | undefined;
 
   return {
     title: `${title} — ISKULTRIP SCANS`,
     description: description.slice(0, 200),
     openGraph: {
-      title: titleBn ? `${title} (${titleBn})` : title,
+      title: titleBn ? `${title} (${titleBn}) — ISKULTRIP SCANS` : `${title} — ISKULTRIP SCANS`,
       description: description.slice(0, 200),
       url: pageUrl,
       siteName: 'ISKULTRIP SCANS',
@@ -70,7 +79,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: title,
+      title: titleBn ? `${title} (${titleBn})` : title,
       description: description.slice(0, 200),
       images: [coverImage],
     },

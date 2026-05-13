@@ -7,17 +7,24 @@ import { TrendingSection } from '@/components/home/TrendingSection';
 import { LatestUpdates } from '@/components/home/LatestUpdates';
 import { GenreBar } from '@/components/home/GenreBar';
 import { LanguageSection } from '@/components/home/LanguageSection';
+import { WelcomeSection } from '@/components/home/WelcomeSection';
+import { AnnouncementBar } from '@/components/home/AnnouncementBar';
+import { UpcomingSection } from '@/components/home/UpcomingSection';
 import {
   getAllGenres,
   getFeaturedManga,
   getTrendingManga,
   getLatestManga,
   getMangaByLanguage,
+  getLatestAnnouncements,
+  getUpcomingReleases,
   type Manga,
   type Genre,
+  type Announcement,
+  type UpcomingRelease,
 } from '@/lib/firestore';
 import { SITE_CONFIG } from '@/lib/config';
-import { Facebook, Send } from 'lucide-react';
+import { Facebook, Send, AlertTriangle, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function HomePage() {
@@ -26,25 +33,43 @@ export default function HomePage() {
   const [trending, setTrending] = useState<Manga[]>([]);
   const [latest, setLatest] = useState<Manga[]>([]);
   const [bnManga, setBnManga] = useState<Manga[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [upcoming, setUpcoming] = useState<UpcomingRelease[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [genresData, featuredData, trendingData, latestData, bnData] = await Promise.all([
+        setError(null);
+        const [genresData, featuredData, trendingData, latestData, bnData, announcementsData, upcomingData] = await Promise.allSettled([
           getAllGenres(),
           getFeaturedManga(),
           getTrendingManga(),
           getLatestManga(10),
           getMangaByLanguage('bn', 10),
+          getLatestAnnouncements(5),
+          getUpcomingReleases(),
         ]);
-        setGenres(genresData);
-        setFeatured(featuredData);
-        setTrending(trendingData);
-        setLatest(latestData);
-        setBnManga(bnData);
-      } catch (error) {
-        console.error('Error fetching home data:', error);
+
+        // Extract results from Promise.allSettled
+        setGenres(genresData.status === 'fulfilled' ? genresData.value : []);
+        setFeatured(featuredData.status === 'fulfilled' ? featuredData.value : []);
+        setTrending(trendingData.status === 'fulfilled' ? trendingData.value : []);
+        setLatest(latestData.status === 'fulfilled' ? latestData.value : []);
+        setBnManga(bnData.status === 'fulfilled' ? bnData.value : []);
+        setAnnouncements(announcementsData.status === 'fulfilled' ? announcementsData.value : []);
+        setUpcoming(upcomingData.status === 'fulfilled' ? upcomingData.value : []);
+
+        // Check if all failed
+        const allFailed = [genresData, featuredData, trendingData, latestData, bnData, announcementsData, upcomingData]
+          .every(r => r.status === 'rejected');
+        if (allFailed) {
+          setError('Unable to load content. Please check your connection and try again.');
+        }
+      } catch (err) {
+        console.error('Error fetching home data:', err);
+        setError('Something went wrong. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -57,11 +82,43 @@ export default function HomePage() {
   return (
     <PublicLayout genres={genreSlugs}>
       <div className="max-w-7xl mx-auto px-4">
+        {/* Welcome Section - Bengali Hero */}
+        <WelcomeSection />
+
+        {/* Error Banner */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-xl flex items-center gap-3"
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+            }}
+          >
+            <AlertTriangle size={20} className="text-red-400 flex-shrink-0" />
+            <p className="text-sm text-red-300 flex-1">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-300 hover:bg-red-400/20 transition-colors"
+            >
+              <RefreshCw size={14} />
+              Retry
+            </button>
+          </motion.div>
+        )}
+
+        {/* Announcement Bar */}
+        <AnnouncementBar announcements={announcements} loading={loading} />
+
         {/* Hero Banner */}
         <HeroBanner manga={featured} loading={loading} />
 
         {/* Trending */}
         <TrendingSection manga={trending} loading={loading} />
+
+        {/* Upcoming Releases with Countdown */}
+        <UpcomingSection releases={upcoming} loading={loading} />
 
         {/* Latest Updates */}
         <LatestUpdates manga={latest} loading={loading} />

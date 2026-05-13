@@ -3,8 +3,8 @@
 export const SITE_CONFIG = {
   name: 'ISKULTRIP SCANS',
   creator: 'MD MEHADI HASAN',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip.com',
-  description: 'Your gateway to manga. Browse, discover, and explore.',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip-scans.vercel.app',
+  description: 'বাংলায় মাঙ্গা অনুবাদের সেরা ঠিকানা — Your gateway to manga in Bengali. Browse, discover, and read.',
 
   // Social Media Links
   social: {

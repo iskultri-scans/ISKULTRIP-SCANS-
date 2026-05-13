@@ -23,7 +23,8 @@ export function Footer({ genres }: FooterProps) {
             <h2 className="font-['Bebas_Neue'] text-2xl tracking-widest mb-2" style={{ color: 'var(--accent)' }}>
               {SITE_CONFIG.name}
             </h2>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">{SITE_CONFIG.description}</p>
+            <p className="text-sm text-[var(--text-secondary)] mb-1">{SITE_CONFIG.description}</p>
+            <p className="text-xs text-[var(--text-muted)] mb-4">বাংলায় মাঙ্গা অনুবাদের সেরা ঠিকানা</p>
 
             {/* Social Join Buttons */}
             <div className="flex gap-2">
@@ -65,6 +66,8 @@ export function Footer({ genres }: FooterProps) {
               <li><Link href="/" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Home</Link></li>
               <li><Link href="/browse" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Browse</Link></li>
               <li><Link href="/bookmarks" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Bookmarks</Link></li>
+              <li><Link href="/blog" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Blog</Link></li>
+              <li><Link href="/requests" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">মাঙ্গা রিকোয়েস্ট</Link></li>
               <li><Link href="/search" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Search</Link></li>
               <li><Link href="/dmca" className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">DMCA</Link></li>
             </ul>

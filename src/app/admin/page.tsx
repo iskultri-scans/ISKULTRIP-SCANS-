@@ -56,10 +56,7 @@ export default function AdminDashboard() {
         ) : stats.recent.length === 0 ? (
           <p className="text-sm text-[var(--text-muted)]">No manga added yet.</p>
         ) : (
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ border: '1px solid var(--border-color)' }}
-          >
+          <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid var(--border-color)' }}>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-card)' }}>

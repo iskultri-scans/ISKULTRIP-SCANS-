@@ -1,6 +1,6 @@
 // Firebase Client SDK - Browser-side initialization
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -16,8 +16,26 @@ const firebaseConfig = {
 // Initialize Firebase (singleton pattern)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Export auth and Firestore instances
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Lazy auth and Firestore - avoid SSR initialization errors
+let _auth: ReturnType<typeof getAuth> | null = null;
+let _db: ReturnType<typeof getFirestore> | null = null;
+
+export function getFirebaseAuth() {
+  if (!_auth) {
+    _auth = getAuth(app);
+  }
+  return _auth;
+}
+
+export function getFirebaseDb() {
+  if (!_db) {
+    _db = getFirestore(app);
+  }
+  return _db;
+}
+
+// For backward compatibility - these will be initialized on first client-side import
+export const auth = typeof window !== 'undefined' ? getAuth(app) : (null as unknown as ReturnType<typeof getAuth>);
+export const db = typeof window !== 'undefined' ? getFirestore(app) : (null as unknown as ReturnType<typeof getFirestore>);
 
 export default app;

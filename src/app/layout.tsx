@@ -3,8 +3,11 @@ import './globals.css';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { BookmarkProvider } from '@/context/BookmarkContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { PWAInstallPrompt } from '@/components/layout/PWAInstallPrompt';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip-scans.vercel.app';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -17,9 +20,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip.vercel.app'),
-  title: 'ISKULTRIP SCANS — Your Gateway to Manga',
-  description: 'Browse manga information, discover new series, and find your next favorite read. ISKULTRIP SCANS by MD MEHADI HASAN.',
+  metadataBase: new URL(SITE_URL),
+  title: 'ISKULTRIP SCANS — বাংলায় মাঙ্গা পড়ুন | Read Manga in Bengali',
+  description: 'বাংলা মাঙ্গা অনুবাদের সেরা ঠিকানা। Browse, discover, and read manga in Bengali. ISKULTRIP SCANS by MD MEHADI HASAN.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -27,9 +30,9 @@ export const metadata: Metadata = {
     title: 'ISKULTRIP',
   },
   openGraph: {
-    title: 'ISKULTRIP SCANS',
-    description: 'Your gateway to manga. Browse, discover, and explore.',
-    url: 'https://iskultrip.com',
+    title: 'ISKULTRIP SCANS — বাংলায় মাঙ্গা পড়ুন',
+    description: 'বাংলা মাঙ্গা অনুবাদের সেরা ঠিকানা। Your gateway to manga in Bengali.',
+    url: SITE_URL,
     type: 'website',
     siteName: 'ISKULTRIP SCANS',
     images: [
@@ -37,14 +40,14 @@ export const metadata: Metadata = {
         url: '/og-default.png',
         width: 1200,
         height: 630,
-        alt: 'ISKULTRIP SCANS',
+        alt: 'ISKULTRIP SCANS - Bengali Manga Translations',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ISKULTRIP SCANS',
-    description: 'Your gateway to manga.',
+    title: 'ISKULTRIP SCANS — বাংলায় মাঙ্গা পড়ুন',
+    description: 'বাংলা মাঙ্গা অনুবাদের সেরা ঠিকানা। Read manga in Bengali.',
     images: ['/og-default.png'],
   },
   icons: {
@@ -64,7 +67,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="bn" className="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -89,10 +92,12 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <BookmarkProvider>
-              <ToastProvider>
-                {children}
-                <PWAInstallPrompt />
-              </ToastProvider>
+              <NotificationProvider>
+                <ToastProvider>
+                  {children}
+                  <PWAInstallPrompt />
+                </ToastProvider>
+              </NotificationProvider>
             </BookmarkProvider>
           </AuthProvider>
         </ThemeProvider>

@@ -58,13 +58,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex min-h-screen" style={{ background: 'var(--bg-primary)' }}>
         <AdminSidebar onSignOut={handleSignOut} />
         <div className="flex-1 overflow-auto">
-          <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
-            <div className="text-sm text-[var(--text-muted)]">
+          <div className="flex items-center justify-between p-3 sm:p-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
+            <div className="text-xs sm:text-sm text-[var(--text-muted)] truncate">
               Logged in as <strong className="text-[var(--text-primary)]">{user.email}</strong>
             </div>
             <ThemeToggle />
           </div>
-          <div className="p-6 max-w-6xl pb-20 lg:pb-6">
+          <div className="p-3 sm:p-6 max-w-6xl pb-24 lg:pb-6 w-full">
             {children}
           </div>
         </div>

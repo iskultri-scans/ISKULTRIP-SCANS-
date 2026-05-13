@@ -3,10 +3,11 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Home, BookOpen, Tag, Search, Shield, LogIn, LogOut, Facebook, Send, Bookmark } from 'lucide-react';
+import { X, Home, BookOpen, Tag, Search, Shield, LogIn, LogOut, Facebook, Send, Bookmark, Megaphone, MessageSquare, Bell } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
 import { useBookmarks } from '@/context/BookmarkContext';
+import { useNotifications } from '@/context/NotificationContext';
 import { SITE_CONFIG } from '@/lib/config';
 
 interface MobileMenuProps {
@@ -18,6 +19,7 @@ interface MobileMenuProps {
 export function MobileMenu({ isOpen, onClose, genres }: MobileMenuProps) {
   const { user, isAdmin, signOut } = useAuth();
   const { bookmarkCount } = useBookmarks();
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     if (isOpen) {
@@ -34,6 +36,8 @@ export function MobileMenu({ isOpen, onClose, genres }: MobileMenuProps) {
     { href: '/', icon: <Home size={18} />, label: 'Home', badge: null },
     { href: '/browse', icon: <BookOpen size={18} />, label: 'Browse', badge: null },
     { href: '/bookmarks', icon: <Bookmark size={18} />, label: 'Bookmarks', badge: bookmarkCount > 0 ? bookmarkCount : null },
+    { href: '/blog', icon: <Megaphone size={18} />, label: 'Blog / ব্লগ', badge: null },
+    { href: '/requests', icon: <MessageSquare size={18} />, label: 'Requests / রিকোয়েস্ট', badge: null },
     { href: '/search', icon: <Search size={18} />, label: 'Search', badge: null },
   ];
 

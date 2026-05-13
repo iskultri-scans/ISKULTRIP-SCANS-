@@ -83,7 +83,7 @@ export default function AdminMangaPage() {
       </div>
 
       <div
-        className="rounded-xl overflow-hidden"
+        className="rounded-xl overflow-x-auto"
         style={{ border: '1px solid var(--border-color)', background: 'var(--bg-card)' }}
       >
         <MangaTable

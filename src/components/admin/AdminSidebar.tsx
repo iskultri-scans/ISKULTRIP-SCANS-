@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, BookOpen, PlusCircle, Tags, LogOut, FilePlus } from 'lucide-react';
+import { LayoutDashboard, BookOpen, PlusCircle, Tags, LogOut, FilePlus, Megaphone, Clock, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AdminSidebarProps {
@@ -16,14 +16,18 @@ const navItems = [
   { href: '/admin/manga/add', label: 'Add Manga', icon: PlusCircle },
   { href: '/admin/chapters', label: 'Post Chapter', icon: FilePlus },
   { href: '/admin/genres', label: 'Genres', icon: Tags },
+  { href: '/admin/blog', label: 'Blog / Announcements', icon: Megaphone },
+  { href: '/admin/upcoming', label: 'Upcoming Releases', icon: Clock },
+  { href: '/admin/requests', label: 'User Requests', icon: MessageSquare },
 ];
 
-// Mobile bottom bar items (5 items)
+// Mobile bottom bar items (5 items max for usability)
 const mobileNavItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin', label: 'Home', icon: LayoutDashboard },
   { href: '/admin/manga', label: 'Manga', icon: BookOpen },
   { href: '/admin/manga/add', label: 'Add', icon: PlusCircle },
-  { href: '/admin/genres', label: 'Genres', icon: Tags },
+  { href: '/admin/chapters', label: 'Chapter', icon: FilePlus },
+  { href: '/admin/requests', label: 'Requests', icon: MessageSquare },
 ];
 
 export function AdminSidebar({ onSignOut }: AdminSidebarProps) {
@@ -49,7 +53,7 @@ export function AdminSidebar({ onSignOut }: AdminSidebarProps) {
           <p className="text-xs text-[var(--text-muted)] mt-1">Admin Panel</p>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const active = isActive(item.href);
             return (
@@ -94,7 +98,7 @@ export function AdminSidebar({ onSignOut }: AdminSidebarProps) {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center justify-center py-2 px-3 min-w-[56px] transition-colors"
+              className="flex flex-col items-center justify-center py-2.5 px-3 min-w-[56px] transition-colors"
               style={{
                 color: active ? 'var(--accent)' : 'var(--text-muted)',
               }}
@@ -106,7 +110,7 @@ export function AdminSidebar({ onSignOut }: AdminSidebarProps) {
         })}
         <button
           onClick={onSignOut}
-          className="flex flex-col items-center justify-center py-2 px-3 min-w-[56px] transition-colors text-red-400"
+          className="flex flex-col items-center justify-center py-2.5 px-3 min-w-[56px] transition-colors text-red-400"
         >
           <LogOut size={20} />
           <span className="text-[10px] mt-0.5 leading-tight">Sign Out</span>
