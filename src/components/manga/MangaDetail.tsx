@@ -49,8 +49,8 @@ export function MangaDetail({ manga }: MangaDetailProps) {
       </motion.div>
 
       {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 -mt-32 relative z-10">
-        <div className="flex flex-col md:flex-row gap-6">
+      <div className="max-w-5xl mx-auto px-4 -mt-32 sm:-mt-32 relative z-10">
+        <div className="flex flex-col items-center md:items-start md:flex-row gap-6">
           {/* Cover */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -58,7 +58,7 @@ export function MangaDetail({ manga }: MangaDetailProps) {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex-shrink-0"
           >
-            <div className="relative w-48 md:w-56 rounded-xl overflow-hidden shadow-2xl group" style={{ aspectRatio: '3/4' }}>
+            <div className="relative w-40 sm:w-48 md:w-56 rounded-xl overflow-hidden shadow-2xl group" style={{ aspectRatio: '3/4' }}>
               <Image
                 src={manga.coverImage || '/no-cover.png'}
                 alt={manga.title}
@@ -77,10 +77,10 @@ export function MangaDetail({ manga }: MangaDetailProps) {
             initial="initial"
             animate="animate"
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex-1 pt-2 md:pt-8"
+            className="flex-1 pt-2 md:pt-8 text-center md:text-left"
           >
-            <div className="flex items-start gap-3 mb-2">
-              <h1 className="font-['Bebas_Neue'] text-3xl md:text-4xl tracking-wide text-[var(--text-primary)]">
+            <div className="flex items-start justify-center md:justify-start gap-3 mb-2">
+              <h1 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl tracking-wide text-[var(--text-primary)]">
                 {manga.title}
               </h1>
               <LanguageBadge language={manga.language} />
@@ -91,14 +91,14 @@ export function MangaDetail({ manga }: MangaDetailProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="text-lg text-[var(--text-secondary)] mb-3"
+                className="text-base sm:text-lg text-[var(--text-secondary)] mb-3"
               >
                 {manga.titleBn}
               </motion.p>
             )}
 
             {/* Stats Row */}
-            <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 mb-4">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"

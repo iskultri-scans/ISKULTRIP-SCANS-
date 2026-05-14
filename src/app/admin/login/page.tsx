@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useToast } from '@/components/ui/Toast';
 import { Shield, Lock, Mail, AlertCircle } from 'lucide-react';
@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
         throw new Error('Unauthorized email');
       }
 
-      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const cred = await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
 
       // Set session cookie
       const idToken = await cred.user.getIdToken();

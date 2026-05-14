@@ -90,11 +90,24 @@ export function MangaCard({ manga, index = 0, showRank = false, rank }: MangaCar
 
             {/* Card Info */}
             <div className="p-3">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] line-clamp-2 leading-tight mb-1">
-                {manga.title}
+              {/* Mobile: Bengali name first, then English. Desktop: English only */}
+              <h3 className="text-xs sm:text-sm font-semibold text-[var(--text-primary)] line-clamp-2 leading-tight mb-1">
+                {manga.titleBn ? (
+                  <>
+                    <span className="block sm:hidden">{manga.titleBn}</span>
+                    <span className="hidden sm:block">{manga.title}</span>
+                  </>
+                ) : (
+                  manga.title
+                )}
               </h3>
-              <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] mb-0.5">
-                <Star size={12} className="text-yellow-400 fill-yellow-400" />
+              {manga.titleBn && (
+                <p className="text-[10px] sm:text-xs text-[var(--text-muted)] line-clamp-1 mb-0.5 hidden sm:block">
+                  {manga.title}
+                </p>
+              )}
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-[var(--text-secondary)] mb-0.5">
+                <Star size={10} className="text-yellow-400 fill-yellow-400 sm:!w-3 sm:!h-3" />
                 <span>{manga.rating}</span>
                 {manga.genres.length > 0 && (
                   <>
@@ -103,7 +116,7 @@ export function MangaCard({ manga, index = 0, showRank = false, rank }: MangaCar
                   </>
                 )}
               </div>
-              <div className="text-xs text-[var(--text-muted)]">
+              <div className="text-[10px] sm:text-xs text-[var(--text-muted)]">
                 Ch. {manga.totalChapters} · {manga.status.charAt(0).toUpperCase() + manga.status.slice(1)}
               </div>
             </div>

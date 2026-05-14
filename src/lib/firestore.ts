@@ -14,7 +14,7 @@ import {
   Timestamp,
   QueryConstraint,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { getFirebaseDb } from './firebase';
 
 // Types
 export interface Chapter {
@@ -116,7 +116,7 @@ export interface MangaRequest {
 
 export async function getAllManga(constraints: QueryConstraint[] = []): Promise<Manga[]> {
   try {
-    const q = query(collection(db, 'manga'), ...constraints);
+    const q = query(collection(getFirebaseDb(), 'manga'), ...constraints);
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Manga);
   } catch (error) {
@@ -127,7 +127,7 @@ export async function getAllManga(constraints: QueryConstraint[] = []): Promise<
 
 export async function getMangaBySlug(slug: string): Promise<Manga | null> {
   try {
-    const q = query(collection(db, 'manga'), where('slug', '==', slug), limit(1));
+    const q = query(collection(getFirebaseDb(), 'manga'), where('slug', '==', slug), limit(1));
     const snap = await getDocs(q);
     if (snap.empty) return null;
     const manga = { id: snap.docs[0].id, ...snap.docs[0].data() } as Manga;
@@ -145,7 +145,7 @@ export async function getMangaBySlug(slug: string): Promise<Manga | null> {
 
 export async function getMangaById(id: string): Promise<Manga | null> {
   try {
-    const snap = await getDoc(doc(db, 'manga', id));
+    const snap = await getDoc(doc(getFirebaseDb(), 'manga', id));
     if (!snap.exists()) return null;
     const manga = { id: snap.id, ...snap.data() } as Manga;
 
@@ -221,7 +221,7 @@ export async function searchManga(searchTerm: string): Promise<Manga[]> {
 }
 
 export async function addManga(data: Omit<Manga, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(db, 'manga'), {
+  const docRef = await addDoc(collection(getFirebaseDb(), 'manga'), {
     ...data,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
@@ -230,7 +230,7 @@ export async function addManga(data: Omit<Manga, 'id'>): Promise<string> {
 }
 
 export async function updateManga(id: string, data: Partial<Manga>): Promise<void> {
-  await updateDoc(doc(db, 'manga', id), {
+  await updateDoc(doc(getFirebaseDb(), 'manga', id), {
     ...data,
     updatedAt: Timestamp.now(),
   });
@@ -240,9 +240,9 @@ export async function deleteManga(id: string): Promise<void> {
   // Delete all chapters first
   const chapters = await getChaptersByMangaId(id);
   for (const ch of chapters) {
-    await deleteDoc(doc(db, 'manga', id, 'chapters', ch.id));
+    await deleteDoc(doc(getFirebaseDb(), 'manga', id, 'chapters', ch.id));
   }
-  await deleteDoc(doc(db, 'manga', id));
+  await deleteDoc(doc(getFirebaseDb(), 'manga', id));
 }
 
 // ─── Chapter CRUD ──────────────────────────────────────────
@@ -250,7 +250,7 @@ export async function deleteManga(id: string): Promise<void> {
 export async function getChaptersByMangaId(mangaId: string): Promise<Chapter[]> {
   try {
     const q = query(
-      collection(db, 'manga', mangaId, 'chapters'),
+      collection(getFirebaseDb(), 'manga', mangaId, 'chapters'),
       orderBy('chapterNumber', 'desc')
     );
     const snap = await getDocs(q);
@@ -262,14 +262,14 @@ export async function getChaptersByMangaId(mangaId: string): Promise<Chapter[]> 
 }
 
 export async function addChapter(mangaId: string, data: Omit<Chapter, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(db, 'manga', mangaId, 'chapters'), {
+  const docRef = await addDoc(collection(getFirebaseDb(), 'manga', mangaId, 'chapters'), {
     ...data,
     createdAt: Timestamp.now(),
   });
 
   // Update totalChapters count on the manga document
   const chapters = await getChaptersByMangaId(mangaId);
-  await updateDoc(doc(db, 'manga', mangaId), {
+  await updateDoc(doc(getFirebaseDb(), 'manga', mangaId), {
     totalChapters: chapters.length,
     updatedAt: Timestamp.now(),
   });
@@ -278,15 +278,15 @@ export async function addChapter(mangaId: string, data: Omit<Chapter, 'id'>): Pr
 }
 
 export async function updateChapter(mangaId: string, chapterId: string, data: Partial<Chapter>): Promise<void> {
-  await updateDoc(doc(db, 'manga', mangaId, 'chapters', chapterId), data);
+  await updateDoc(doc(getFirebaseDb(), 'manga', mangaId, 'chapters', chapterId), data);
 }
 
 export async function deleteChapter(mangaId: string, chapterId: string): Promise<void> {
-  await deleteDoc(doc(db, 'manga', mangaId, 'chapters', chapterId));
+  await deleteDoc(doc(getFirebaseDb(), 'manga', mangaId, 'chapters', chapterId));
 
   // Update totalChapters count
   const chapters = await getChaptersByMangaId(mangaId);
-  await updateDoc(doc(db, 'manga', mangaId), {
+  await updateDoc(doc(getFirebaseDb(), 'manga', mangaId), {
     totalChapters: chapters.length,
     updatedAt: Timestamp.now(),
   });
@@ -296,7 +296,7 @@ export async function deleteChapter(mangaId: string, chapterId: string): Promise
 
 export async function getAllGenres(): Promise<Genre[]> {
   try {
-    const q = query(collection(db, 'genres'), orderBy('name', 'asc'));
+    const q = query(collection(getFirebaseDb(), 'genres'), orderBy('name', 'asc'));
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Genre);
   } catch (error) {
@@ -307,7 +307,7 @@ export async function getAllGenres(): Promise<Genre[]> {
 
 export async function getGenreBySlug(slug: string): Promise<Genre | null> {
   try {
-    const q = query(collection(db, 'genres'), where('slug', '==', slug), limit(1));
+    const q = query(collection(getFirebaseDb(), 'genres'), where('slug', '==', slug), limit(1));
     const snap = await getDocs(q);
     if (snap.empty) return null;
     return { id: snap.docs[0].id, ...snap.docs[0].data() } as Genre;
@@ -318,16 +318,16 @@ export async function getGenreBySlug(slug: string): Promise<Genre | null> {
 }
 
 export async function addGenre(data: Omit<Genre, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(db, 'genres'), data);
+  const docRef = await addDoc(collection(getFirebaseDb(), 'genres'), data);
   return docRef.id;
 }
 
 export async function updateGenre(id: string, data: Partial<Genre>): Promise<void> {
-  await updateDoc(doc(db, 'genres', id), data);
+  await updateDoc(doc(getFirebaseDb(), 'genres', id), data);
 }
 
 export async function deleteGenre(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'genres', id));
+  await deleteDoc(doc(getFirebaseDb(), 'genres', id));
 }
 
 // ─── Bookmarks ─────────────────────────────────────────────
@@ -347,7 +347,7 @@ export interface BookmarkData {
 }
 
 export async function addBookmark(userId: string, manga: Manga): Promise<void> {
-  const bookmarkRef = doc(db, 'users', userId, 'bookmarks', manga.id);
+  const bookmarkRef = doc(getFirebaseDb(), 'users', userId, 'bookmarks', manga.id);
   await setDoc(bookmarkRef, {
     mangaId: manga.id,
     title: manga.title,
@@ -364,12 +364,12 @@ export async function addBookmark(userId: string, manga: Manga): Promise<void> {
 }
 
 export async function removeBookmark(userId: string, mangaId: string): Promise<void> {
-  await deleteDoc(doc(db, 'users', userId, 'bookmarks', mangaId));
+  await deleteDoc(doc(getFirebaseDb(), 'users', userId, 'bookmarks', mangaId));
 }
 
 export async function getUserBookmarks(userId: string): Promise<BookmarkData[]> {
   const q = query(
-    collection(db, 'users', userId, 'bookmarks'),
+    collection(getFirebaseDb(), 'users', userId, 'bookmarks'),
     orderBy('bookmarkedAt', 'desc')
   );
   const snap = await getDocs(q);
@@ -377,7 +377,7 @@ export async function getUserBookmarks(userId: string): Promise<BookmarkData[]> 
 }
 
 export async function isBookmarked(userId: string, mangaId: string): Promise<boolean> {
-  const snap = await getDoc(doc(db, 'users', userId, 'bookmarks', mangaId));
+  const snap = await getDoc(doc(getFirebaseDb(), 'users', userId, 'bookmarks', mangaId));
   return snap.exists();
 }
 
@@ -386,7 +386,7 @@ export async function getBookmarkedManga(userId: string): Promise<Manga[]> {
   const mangaList: Manga[] = [];
 
   for (const bm of bookmarks) {
-    const snap = await getDoc(doc(db, 'manga', bm.mangaId));
+    const snap = await getDoc(doc(getFirebaseDb(), 'manga', bm.mangaId));
     if (snap.exists()) {
       const manga = { id: snap.id, ...snap.data() } as Manga;
       mangaList.push(manga);
@@ -413,7 +413,7 @@ export async function getStats() {
 // ─── Announcements / Blog ──────────────────────────────────
 
 export async function addAnnouncement(data: Omit<Announcement, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(db, 'announcements'), {
+  const docRef = await addDoc(collection(getFirebaseDb(), 'announcements'), {
     ...data,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
@@ -423,7 +423,7 @@ export async function addAnnouncement(data: Omit<Announcement, 'id'>): Promise<s
 
 export async function getAllAnnouncements(): Promise<Announcement[]> {
   try {
-    const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
+    const q = query(collection(getFirebaseDb(), 'announcements'), orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Announcement);
   } catch (error) {
@@ -434,7 +434,7 @@ export async function getAllAnnouncements(): Promise<Announcement[]> {
 
 export async function getAnnouncementById(id: string): Promise<Announcement | null> {
   try {
-    const snap = await getDoc(doc(db, 'announcements', id));
+    const snap = await getDoc(doc(getFirebaseDb(), 'announcements', id));
     if (!snap.exists()) return null;
     return { id: snap.id, ...snap.data() } as Announcement;
   } catch (error) {
@@ -444,19 +444,19 @@ export async function getAnnouncementById(id: string): Promise<Announcement | nu
 }
 
 export async function updateAnnouncement(id: string, data: Partial<Announcement>): Promise<void> {
-  await updateDoc(doc(db, 'announcements', id), {
+  await updateDoc(doc(getFirebaseDb(), 'announcements', id), {
     ...data,
     updatedAt: Timestamp.now(),
   });
 }
 
 export async function deleteAnnouncement(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'announcements', id));
+  await deleteDoc(doc(getFirebaseDb(), 'announcements', id));
 }
 
 export async function getLatestAnnouncements(count = 5): Promise<Announcement[]> {
   try {
-    const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(count));
+    const q = query(collection(getFirebaseDb(), 'announcements'), orderBy('createdAt', 'desc'), limit(count));
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Announcement);
   } catch (error) {
@@ -468,7 +468,7 @@ export async function getLatestAnnouncements(count = 5): Promise<Announcement[]>
 // ─── Notifications ─────────────────────────────────────────
 
 export async function addNotification(data: Omit<Notification, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(db, 'notifications'), {
+  const docRef = await addDoc(collection(getFirebaseDb(), 'notifications'), {
     ...data,
     createdAt: Timestamp.now(),
   });
@@ -477,7 +477,7 @@ export async function addNotification(data: Omit<Notification, 'id'>): Promise<s
 
 export async function getNotifications(count = 20): Promise<Notification[]> {
   try {
-    const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(count));
+    const q = query(collection(getFirebaseDb(), 'notifications'), orderBy('createdAt', 'desc'), limit(count));
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Notification);
   } catch (error) {
@@ -487,13 +487,13 @@ export async function getNotifications(count = 20): Promise<Notification[]> {
 }
 
 export async function deleteNotification(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'notifications', id));
+  await deleteDoc(doc(getFirebaseDb(), 'notifications', id));
 }
 
 // ─── Upcoming Releases ─────────────────────────────────────
 
 export async function addUpcomingRelease(data: Omit<UpcomingRelease, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(db, 'upcomingReleases'), {
+  const docRef = await addDoc(collection(getFirebaseDb(), 'upcomingReleases'), {
     ...data,
     createdAt: Timestamp.now(),
   });
@@ -503,7 +503,7 @@ export async function addUpcomingRelease(data: Omit<UpcomingRelease, 'id'>): Pro
 export async function getUpcomingReleases(): Promise<UpcomingRelease[]> {
   try {
     // Fetch all ordered by releaseDate, filter client-side for future dates
-    const q = query(collection(db, 'upcomingReleases'), orderBy('releaseDate', 'asc'), limit(20));
+    const q = query(collection(getFirebaseDb(), 'upcomingReleases'), orderBy('releaseDate', 'asc'), limit(20));
     const snap = await getDocs(q);
     const now = Date.now();
     return snap.docs
@@ -516,12 +516,12 @@ export async function getUpcomingReleases(): Promise<UpcomingRelease[]> {
 }
 
 export async function deleteUpcomingRelease(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'upcomingReleases', id));
+  await deleteDoc(doc(getFirebaseDb(), 'upcomingReleases', id));
 }
 
 export async function getAllUpcomingReleases(): Promise<UpcomingRelease[]> {
   try {
-    const q = query(collection(db, 'upcomingReleases'), orderBy('releaseDate', 'asc'));
+    const q = query(collection(getFirebaseDb(), 'upcomingReleases'), orderBy('releaseDate', 'asc'));
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as UpcomingRelease);
   } catch (error) {
@@ -533,7 +533,7 @@ export async function getAllUpcomingReleases(): Promise<UpcomingRelease[]> {
 // ─── User Requests ─────────────────────────────────────────
 
 export async function addRequest(data: Omit<MangaRequest, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(db, 'requests'), {
+  const docRef = await addDoc(collection(getFirebaseDb(), 'requests'), {
     ...data,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
@@ -543,7 +543,7 @@ export async function addRequest(data: Omit<MangaRequest, 'id'>): Promise<string
 
 export async function getAllRequests(): Promise<MangaRequest[]> {
   try {
-    const q = query(collection(db, 'requests'), orderBy('createdAt', 'desc'));
+    const q = query(collection(getFirebaseDb(), 'requests'), orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as MangaRequest);
   } catch (error) {
@@ -553,18 +553,18 @@ export async function getAllRequests(): Promise<MangaRequest[]> {
 }
 
 export async function updateRequest(id: string, data: Partial<MangaRequest>): Promise<void> {
-  await updateDoc(doc(db, 'requests', id), {
+  await updateDoc(doc(getFirebaseDb(), 'requests', id), {
     ...data,
     updatedAt: Timestamp.now(),
   });
 }
 
 export async function deleteRequest(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'requests', id));
+  await deleteDoc(doc(getFirebaseDb(), 'requests', id));
 }
 
 export async function upvoteRequest(id: string, userId: string): Promise<void> {
-  const reqDoc = doc(db, 'requests', id);
+  const reqDoc = doc(getFirebaseDb(), 'requests', id);
   const snap = await getDoc(reqDoc);
   if (!snap.exists()) return;
 

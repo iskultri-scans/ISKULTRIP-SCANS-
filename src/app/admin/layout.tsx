@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
@@ -45,7 +45,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
+      await signOut(getFirebaseAuth());
       document.cookie = 'iskultrip-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       router.push('/admin/login');
     } catch (error) {

@@ -11,7 +11,7 @@ import {
   signInWithPopup,
   type User,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
         const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'mdhasan@example.com';
@@ -54,21 +54,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, displayName: string) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const cred = await createUserWithEmailAndPassword(getFirebaseAuth(), email, password);
     await updateProfile(cred.user, { displayName });
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    await signInWithPopup(getFirebaseAuth(), provider);
   }, []);
 
   const signOut = useCallback(async () => {
-    await firebaseSignOut(auth);
+    await firebaseSignOut(getFirebaseAuth());
     document.cookie = 'iskultrip-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   }, []);
 

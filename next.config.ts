@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
     ],
     unoptimized: true,
   },
-  // Headers for PWA and security
+  // Headers for PWA, security, and social sharing
   async headers() {
     return [
       {
@@ -28,12 +28,18 @@ const nextConfig: NextConfig = {
             value: 'nosniff',
           },
           {
+            // SAMEORIGIN allows Facebook/Telegram to embed previews
+            // DENY was blocking social media link previews
             key: 'X-Frame-Options',
-            value: 'DENY',
+            value: 'SAMEORIGIN',
           },
           {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://firestore.googleapis.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://www.facebook.com https://web.facebook.com https://telegram.org https://t.me; frame-ancestors 'self' https://www.facebook.com https://web.facebook.com https://telegram.org https://t.me;",
           },
         ],
       },

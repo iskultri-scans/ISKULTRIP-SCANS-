@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Facebook, MessageCircle, Copy, Check, Send, Share2 } from 'lucide-react';
+import { Facebook, MessageCircle, Copy, Check, Send, Share2, Link as LinkIcon } from 'lucide-react';
 import { SITE_CONFIG } from '@/lib/config';
 
 interface ShareButtonsProps {
@@ -14,8 +14,16 @@ interface ShareButtonsProps {
 
 export function ShareButtons({ title, slug, description, coverImage }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
-  const [showMore, setShowMore] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [showUrlField, setShowUrlField] = useState(false);
   const pageUrl = `${SITE_CONFIG.url}/manga/${slug}`;
+
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+    setToastMsg(msg);
+    setToastType(type);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
 
   const shareFacebook = () => {
     window.open(
@@ -41,37 +49,88 @@ export function ShareButtons({ title, slug, description, coverImage }: ShareButt
     );
   };
 
+  // Copy link with fallback for mobile browsers
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(pageUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // Try modern Clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(pageUrl);
+        setCopied(true);
+        showToast('লিংক কপি হয়েছে!', 'success');
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
     } catch {
-      // Fallback
+      // Clipboard API failed, try fallback
+    }
+
+    // Fallback: use execCommand('copy') for older/mobile browsers
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = pageUrl;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      textArea.style.top = '-9999px';
+      textArea.setAttribute('readonly', '');
+      document.body.appendChild(textArea);
+      textArea.select();
+      textArea.setSelectionRange(0, pageUrl.length);
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+
+      if (successful) {
+        setCopied(true);
+        showToast('লিংক কপি হয়েছে!', 'success');
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        // Show URL field for manual copy
+        setShowUrlField(true);
+        showToast('কপি করতে সমস্যা হয়েছে। নিচের লিংক ম্যানুয়ালি কপি করুন।', 'error');
+      }
+    } catch {
+      setShowUrlField(true);
+      showToast('কপি করতে সমস্যা হয়েছে। নিচের লিংক ম্যানুয়ালি কপি করুন।', 'error');
     }
   };
 
-  // Native share API for mobile
+  // Native share API for mobile - prioritized on mobile devices
   const nativeShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
           title: title,
-          text: description || `Read ${title} on ISKULTRIP SCANS`,
+          text: description || `${title} পড়ুন ISKULTRIP SCANS-এ`,
           url: pageUrl,
         });
-      } catch {
-        // User cancelled
+        showToast('শেয়ার সফল!', 'success');
+      } catch (err) {
+        // User cancelled or error - do nothing
+        if ((err as DOMException).name !== 'AbortError') {
+          setShowUrlField(true);
+        }
       }
     } else {
-      setShowMore(!showMore);
+      setShowUrlField(!showUrlField);
     }
   };
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <span className="text-sm font-medium text-[var(--text-secondary)]">Share:</span>
+
+        {/* Native Share button - shown on mobile devices that support it */}
+        {typeof navigator !== 'undefined' && navigator.share && (
+          <motion.button
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={nativeShare}
+            className="p-2.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all"
+            aria-label="Share via native menu"
+          >
+            <Share2 size={18} />
+          </motion.button>
+        )}
 
         <motion.button
           whileHover={{ scale: 1.15 }}
@@ -133,16 +192,76 @@ export function ShareButtons({ title, slug, description, coverImage }: ShareButt
           </AnimatePresence>
         </motion.button>
 
-        <motion.button
-          whileHover={{ scale: 1.15 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={nativeShare}
-          className="p-2.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all"
-          aria-label="More sharing options"
-        >
-          <Share2 size={18} />
-        </motion.button>
+        {/* More share options button - only shown on desktop where native share is not available */}
+        {typeof navigator !== 'undefined' && !navigator.share && (
+          <motion.button
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={nativeShare}
+            className="p-2.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-all"
+            aria-label="More sharing options"
+          >
+            <Share2 size={18} />
+          </motion.button>
+        )}
       </div>
+
+      {/* Read-only URL input field for manual copy */}
+      <AnimatePresence>
+        {showUrlField && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+              <LinkIcon size={14} className="text-[var(--text-muted)] flex-shrink-0" />
+              <input
+                type="text"
+                readOnly
+                value={pageUrl}
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+                className="flex-1 bg-transparent text-xs text-[var(--text-secondary)] outline-none min-w-0"
+                style={{ caretColor: 'transparent' }}
+              />
+              <button
+                onClick={() => {
+                  const input = document.querySelector('input[readonly]') as HTMLInputElement;
+                  if (input) {
+                    input.select();
+                    document.execCommand('copy');
+                    setCopied(true);
+                    showToast('লিংক কপি হয়েছে!', 'success');
+                    setTimeout(() => setCopied(false), 2000);
+                  }
+                }}
+                className="text-xs px-2 py-1 rounded-md text-[var(--accent)] hover:bg-[var(--accent-glow)] transition-colors flex-shrink-0"
+              >
+                Copy
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast notification */}
+      <AnimatePresence>
+        {toastMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className={`text-xs px-3 py-2 rounded-lg ${
+              toastType === 'success'
+                ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20'
+                : 'bg-red-400/10 text-red-400 border border-red-400/20'
+            }`}
+          >
+            {toastMsg}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

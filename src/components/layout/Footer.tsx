@@ -17,7 +17,7 @@ export function Footer({ genres }: FooterProps) {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
             <h2 className="font-['Bebas_Neue'] text-2xl tracking-widest mb-2" style={{ color: 'var(--accent)' }}>

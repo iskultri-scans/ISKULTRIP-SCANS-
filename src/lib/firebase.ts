@@ -34,8 +34,4 @@ export function getFirebaseDb() {
   return _db;
 }
 
-// For backward compatibility - these will be initialized on first client-side import
-export const auth = typeof window !== 'undefined' ? getAuth(app) : (null as unknown as ReturnType<typeof getAuth>);
-export const db = typeof window !== 'undefined' ? getFirestore(app) : (null as unknown as ReturnType<typeof getFirestore>);
-
 export default app;
