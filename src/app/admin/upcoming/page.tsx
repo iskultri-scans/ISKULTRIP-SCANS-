@@ -299,7 +299,7 @@ export default function AdminUpcomingPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
                   <button
                     onClick={() => setDeleteTarget(release)}
                     className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 transition-all"

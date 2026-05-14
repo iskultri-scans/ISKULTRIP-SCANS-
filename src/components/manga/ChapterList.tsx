@@ -150,7 +150,7 @@ export function ChapterList({ chapters, mangaTitle }: ChapterListProps) {
                       </div>
                       <ExternalLink
                         size={14}
-                        className="flex-shrink-0 text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-all opacity-0 group-hover:opacity-100"
+                        className="flex-shrink-0 text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-all sm:opacity-0 sm:group-hover:opacity-100"
                       />
                     </motion.button>
                   ))
