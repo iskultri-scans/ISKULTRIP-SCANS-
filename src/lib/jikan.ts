@@ -1,8 +1,6 @@
 // Jikan API v4 - Free MyAnimeList API (No API key required!)
+// Uses Next.js API routes as proxy to avoid CORS issues in the browser
 // Docs: https://docs.api.jikan.moe/
-// Rate limit: ~3 requests/sec (unauthenticated)
-
-const JIKAN_BASE = 'https://api.jikan.moe/v4';
 
 export interface JikanMangaSearchResult {
   mal_id: number;
@@ -60,40 +58,19 @@ export interface AutoFillData {
   trending: boolean;
 }
 
-// Simple rate limiter to avoid hitting Jikan API limits
-let lastRequestTime = 0;
-const MIN_INTERVAL = 400; // ms between requests
-
-async function rateLimitedFetch(url: string): Promise<Response> {
-  const now = Date.now();
-  const timeSinceLast = now - lastRequestTime;
-  if (timeSinceLast < MIN_INTERVAL) {
-    await new Promise((r) => setTimeout(r, MIN_INTERVAL - timeSinceLast));
-  }
-  lastRequestTime = Date.now();
-  return fetch(url);
-}
-
 /**
- * Search manga by title using Jikan API
+ * Search manga by title using our Next.js API proxy
+ * This avoids CORS issues when calling from the browser
  */
-export async function searchMangaJikan(query: string, limit = 10): Promise<JikanMangaSearchResult[]> {
+export async function searchMangaJikan(query: string, limit = 8): Promise<JikanMangaSearchResult[]> {
   if (!query.trim() || query.trim().length < 2) return [];
 
   try {
-    const url = `${JIKAN_BASE}/manga?q=${encodeURIComponent(query)}&limit=${limit}&sfw=true`;
-    const res = await rateLimitedFetch(url);
+    const url = `/api/manga/search?q=${encodeURIComponent(query)}&limit=${limit}`;
+    const res = await fetch(url);
 
     if (!res.ok) {
-      if (res.status === 429) {
-        console.warn('Jikan API rate limit hit. Retrying in 1s...');
-        await new Promise((r) => setTimeout(r, 1000));
-        const retryRes = await rateLimitedFetch(url);
-        if (!retryRes.ok) return [];
-        const retryData: JikanSearchResponse = await retryRes.json();
-        return retryData.data || [];
-      }
-      console.error('Jikan API error:', res.status, res.statusText);
+      console.error('Jikan proxy search error:', res.status, res.statusText);
       return [];
     }
 
@@ -106,15 +83,15 @@ export async function searchMangaJikan(query: string, limit = 10): Promise<Jikan
 }
 
 /**
- * Get full manga details by MAL ID
+ * Get full manga details by MAL ID via our Next.js API proxy
  */
 export async function getMangaDetailJikan(malId: number): Promise<JikanMangaSearchResult | null> {
   try {
-    const url = `${JIKAN_BASE}/manga/${malId}/full`;
-    const res = await rateLimitedFetch(url);
+    const url = `/api/manga/detail?id=${malId}`;
+    const res = await fetch(url);
 
     if (!res.ok) {
-      console.error('Jikan detail API error:', res.status);
+      console.error('Jikan proxy detail error:', res.status);
       return null;
     }
 
