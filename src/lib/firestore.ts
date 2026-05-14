@@ -221,12 +221,22 @@ export async function searchManga(searchTerm: string): Promise<Manga[]> {
 }
 
 export async function addManga(data: Omit<Manga, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(getFirebaseDb(), 'manga'), {
-    ...data,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-  });
-  return docRef.id;
+  try {
+    const db = getFirebaseDb();
+    const docRef = await addDoc(collection(db, 'manga'), {
+      ...data,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+    return docRef.id;
+  } catch (error: any) {
+    console.error('Firestore addManga error:', {
+      code: error?.code,
+      message: error?.message,
+      name: error?.name,
+    });
+    throw error; // Re-throw so caller can handle
+  }
 }
 
 export async function updateManga(id: string, data: Partial<Manga>): Promise<void> {

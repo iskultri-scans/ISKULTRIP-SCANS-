@@ -7,12 +7,15 @@ import { MangaForm } from '@/components/admin/MangaForm';
 import { ChapterManager } from '@/components/admin/ChapterManager';
 import { getMangaById, updateManga, getAllGenres, type Genre, type Manga } from '@/lib/firestore';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/context/AuthContext';
+import { getFirebaseAuth } from '@/lib/firebase';
 
 export default function EditMangaPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const { showToast } = useToast();
+  const { user, isAdmin } = useAuth();
   const [manga, setManga] = useState<Partial<Manga> | null>(null);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,8 +32,20 @@ export default function EditMangaPage() {
   }, [id]);
 
   const handleSubmit = async (data: Record<string, unknown>) => {
+    if (!user || !isAdmin) {
+      showToast('You do not have permission to edit manga', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
+      // Force-refresh the auth token before writing to Firestore
+      const auth = getFirebaseAuth();
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await currentUser.getIdToken(true);
+      }
+
       await updateManga(id, {
         title: data.title as string,
         titleBn: (data.titleBn as string) || undefined,
@@ -50,9 +65,14 @@ export default function EditMangaPage() {
       });
       showToast('Manga updated successfully!', 'success');
       router.push('/admin/manga');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating manga:', error);
-      showToast('Failed to update manga', 'error');
+      const errorMsg = error?.message || 'Failed to update manga';
+      if (errorMsg.includes('permission-denied') || errorMsg.includes('PERMISSION_DENIED')) {
+        showToast('Permission denied — make sure you are logged in as admin', 'error');
+      } else {
+        showToast(`Failed to update manga: ${errorMsg}`, 'error');
+      }
     } finally {
       setLoading(false);
     }

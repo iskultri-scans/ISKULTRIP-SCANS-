@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(getFirebaseAuth(), (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'mdhasan@example.com';
+        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'bongmanga.official@gmail.com';
         setIsAdmin(firebaseUser.email === adminEmail);
       } else {
         setIsAdmin(false);

@@ -6,11 +6,14 @@ import { AdminHeader } from '@/components/admin/AdminHeader';
 import { MangaForm } from '@/components/admin/MangaForm';
 import { addManga, getAllGenres, addNotification, type Genre } from '@/lib/firestore';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/context/AuthContext';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { Timestamp } from 'firebase/firestore';
 
 export default function AddMangaPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { user, isAdmin } = useAuth();
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -19,8 +22,26 @@ export default function AddMangaPage() {
   }, []);
 
   const handleSubmit = async (data: Record<string, unknown>) => {
+    // Pre-flight auth check
+    if (!user) {
+      showToast('You must be logged in to add manga', 'error');
+      return;
+    }
+    if (!isAdmin) {
+      showToast('You do not have admin permission to add manga', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
+      // Force-refresh the auth token before writing to Firestore
+      // This prevents stale-token permission errors
+      const auth = getFirebaseAuth();
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await currentUser.getIdToken(true); // Force token refresh
+      }
+
       await addManga({
         title: data.title as string,
         titleBn: (data.titleBn as string) || undefined,
@@ -62,9 +83,19 @@ export default function AddMangaPage() {
 
       showToast('Manga added successfully!', 'success');
       router.push('/admin/manga');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding manga:', error);
-      showToast('Failed to add manga', 'error');
+      const errorMsg = error?.message || 'Failed to add manga';
+      // Show more specific error messages
+      if (errorMsg.includes('permission-denied') || errorMsg.includes('PERMISSION_DENIED')) {
+        showToast('Permission denied — make sure you are logged in as admin', 'error');
+      } else if (errorMsg.includes('network') || errorMsg.includes('offline')) {
+        showToast('Network error — check your internet connection', 'error');
+      } else if (errorMsg.includes('already exists') || errorMsg.includes('duplicate')) {
+        showToast('A manga with this slug already exists', 'error');
+      } else {
+        showToast(`Failed to add manga: ${errorMsg}`, 'error');
+      }
     } finally {
       setLoading(false);
     }
