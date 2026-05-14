@@ -220,14 +220,30 @@ export async function searchManga(searchTerm: string): Promise<Manga[]> {
   );
 }
 
+/**
+ * Remove undefined values from an object before writing to Firestore.
+ * Firestore does NOT accept undefined field values — they cause:
+ * "Function addDoc() called with invalid data. Unsupported field value: undefined"
+ */
+function removeUndefined<T extends Record<string, unknown>>(obj: T): T {
+  const cleaned = { ...obj } as Record<string, unknown>;
+  for (const key of Object.keys(cleaned)) {
+    if (cleaned[key] === undefined) {
+      delete cleaned[key];
+    }
+  }
+  return cleaned as T;
+}
+
 export async function addManga(data: Omit<Manga, 'id'>): Promise<string> {
   try {
     const db = getFirebaseDb();
-    const docRef = await addDoc(collection(db, 'manga'), {
+    const cleanData = removeUndefined({
       ...data,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
+    const docRef = await addDoc(collection(db, 'manga'), cleanData);
     return docRef.id;
   } catch (error: any) {
     console.error('Firestore addManga error:', {
@@ -240,10 +256,11 @@ export async function addManga(data: Omit<Manga, 'id'>): Promise<string> {
 }
 
 export async function updateManga(id: string, data: Partial<Manga>): Promise<void> {
-  await updateDoc(doc(getFirebaseDb(), 'manga', id), {
+  const cleanData = removeUndefined({
     ...data,
     updatedAt: Timestamp.now(),
   });
+  await updateDoc(doc(getFirebaseDb(), 'manga', id), cleanData);
 }
 
 export async function deleteManga(id: string): Promise<void> {
@@ -423,11 +440,11 @@ export async function getStats() {
 // ─── Announcements / Blog ──────────────────────────────────
 
 export async function addAnnouncement(data: Omit<Announcement, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(getFirebaseDb(), 'announcements'), {
+  const docRef = await addDoc(collection(getFirebaseDb(), 'announcements'), removeUndefined({
     ...data,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
-  });
+  }));
   return docRef.id;
 }
 
@@ -478,10 +495,10 @@ export async function getLatestAnnouncements(count = 5): Promise<Announcement[]>
 // ─── Notifications ─────────────────────────────────────────
 
 export async function addNotification(data: Omit<Notification, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(getFirebaseDb(), 'notifications'), {
+  const docRef = await addDoc(collection(getFirebaseDb(), 'notifications'), removeUndefined({
     ...data,
     createdAt: Timestamp.now(),
-  });
+  }));
   return docRef.id;
 }
 
