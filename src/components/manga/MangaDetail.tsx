@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import { Star, BookOpen, User, Palette, Calendar } from 'lucide-react';
 import { LanguageBadge } from './LanguageBadge';
 import { GenreTags } from './GenreTags';
-import { ReadNowButton } from './ReadNowButton';
 import { ShareButtons } from './ShareButtons';
 import { ChapterList } from './ChapterList';
 import { BookmarkButton } from './BookmarkButton';
@@ -172,7 +171,6 @@ export function MangaDetail({ manga }: MangaDetailProps) {
           transition={{ duration: 0.5, delay: 0.5 }}
           className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4"
         >
-          <ReadNowButton readLink={manga.readLink} />
           <BookmarkButton
             manga={manga}
             isBookmarked={bookmarked}
@@ -194,8 +192,8 @@ export function MangaDetail({ manga }: MangaDetailProps) {
           <ChapterList chapters={manga.chapters} mangaTitle={manga.title} />
         )}
 
-        {/* Empty chapter state with CTA */}
-        {(!manga.chapters || manga.chapters.length === 0) && manga.readLink && (
+        {/* Empty chapter state */}
+        {(!manga.chapters || manga.chapters.length === 0) && (
           <motion.div
             variants={fadeUp}
             initial="initial"
@@ -205,16 +203,9 @@ export function MangaDetail({ manga }: MangaDetailProps) {
           >
             <div className="glass-card p-6 text-center">
               <BookOpen size={32} className="mx-auto mb-3 text-[var(--accent)]" />
-              <p className="text-[var(--text-secondary)] mb-3">
-                Chapters are available on the reading platform.
+              <p className="text-[var(--text-secondary)]">
+                এখনো কোন চ্যাপ্টার যোগ করা হয়নি। শীঘ্রই চ্যাপ্টার আসছে!
               </p>
-              <button
-                onClick={() => window.open(manga.readLink, '_blank', 'noopener,noreferrer')}
-                className="btn-accent inline-flex items-center gap-2 text-sm"
-              >
-                <BookOpen size={16} />
-                Read on External Site
-              </button>
             </div>
           </motion.div>
         )}

@@ -45,7 +45,6 @@ export default function EditMangaPage() {
         rating: Number(data.rating),
         totalChapters: Number(data.totalChapters),
         language: data.language as 'en' | 'bn',
-        readLink: data.readLink as string,
         featured: data.featured as boolean,
         trending: data.trending as boolean,
       });

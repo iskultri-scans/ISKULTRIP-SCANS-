@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { slugify } from '@/lib/utils';
 import { CustomDropdown, type DropdownOption } from '@/components/ui/CustomDropdown';
-import { Clock, CheckCircle, Pause, Globe, Search, Sparkles, X, Loader2, ExternalLink } from 'lucide-react';
+import { Clock, CheckCircle, Pause, Globe, Search, Sparkles, X, Loader2 } from 'lucide-react';
 import { searchMangaJikan, getMangaDetailJikan, jikanToAutoFill, type JikanMangaSearchResult, type AutoFillData } from '@/lib/jikan';
 import type { Manga } from '@/lib/firestore';
 
@@ -41,7 +41,6 @@ const defaultForm = {
   rating: 0,
   totalChapters: 0,
   language: 'en' as string,
-  readLink: '',
   featured: false,
   trending: false,
 };
@@ -62,7 +61,6 @@ function buildFormFromInitial(initialData?: Partial<Manga>) {
     rating: initialData.rating || 0,
     totalChapters: initialData.totalChapters || 0,
     language: initialData.language || 'en',
-    readLink: initialData.readLink || '',
     featured: initialData.featured || false,
     trending: initialData.trending || false,
   };
@@ -146,7 +144,6 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
         status: autoFillData.status,
         rating: autoFillData.rating,
         totalChapters: autoFillData.totalChapters,
-        readLink: autoFillData.readLink,
       }));
 
       setAutoFillSource(`MyAnimeList #${malId}`);
@@ -517,17 +514,6 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
           <label className={labelClass}>Total Chapters</label>
           <input name="totalChapters" type="number" min="0" value={form.totalChapters} onChange={handleChange} className={inputClass} style={inputStyle} />
         </div>
-      </div>
-
-      {/* Read Link */}
-      <div>
-        <label className={labelClass}>Read Link *</label>
-        <input name="readLink" value={form.readLink} onChange={handleChange} required className={inputClass} style={inputStyle} placeholder="https://external-site.com/manga/..." />
-        {form.readLink && (
-          <a href={form.readLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-[var(--accent)] mt-1 hover:underline">
-            <ExternalLink size={10} /> Test link
-          </a>
-        )}
       </div>
 
       {/* Checkboxes */}

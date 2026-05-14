@@ -53,7 +53,6 @@ export interface AutoFillData {
   rating: number;
   totalChapters: number;
   language: 'en' | 'bn';
-  readLink: string;
   featured: boolean;
   trending: boolean;
 }
@@ -170,7 +169,6 @@ export function jikanToAutoFill(manga: JikanMangaSearchResult): AutoFillData {
     rating,
     totalChapters: manga.chapters || 0,
     language: 'en',
-    readLink: manga.url || '',
     featured: false,
     trending: false,
   };

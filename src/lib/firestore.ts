@@ -41,7 +41,7 @@ export interface Manga {
   rating: number;
   totalChapters: number;
   language: 'en' | 'bn';
-  readLink: string;
+  readLink?: string;
   featured: boolean;
   trending: boolean;
   chapters?: Chapter[];

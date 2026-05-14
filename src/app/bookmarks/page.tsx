@@ -168,7 +168,6 @@ export default function BookmarksPage() {
                               rating: bm.rating,
                               totalChapters: bm.totalChapters,
                               language: bm.language,
-                              readLink: '',
                               featured: false,
                               trending: false,
                               createdAt: null as any,
