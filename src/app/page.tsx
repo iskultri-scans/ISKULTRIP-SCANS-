@@ -81,7 +81,7 @@ export default function HomePage() {
 
   return (
     <PublicLayout genres={genreSlugs}>
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 overflow-x-hidden">
         {/* Welcome Section - Bengali Hero */}
         <WelcomeSection />
 
@@ -132,10 +132,10 @@ export default function HomePage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="py-10"
+          className="py-6 sm:py-10"
         >
           <div
-            className="rounded-2xl p-8 md:p-10 text-center relative overflow-hidden"
+            className="rounded-2xl p-5 sm:p-8 md:p-10 text-center relative overflow-hidden"
             style={{
               background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(0, 136, 204, 0.05))',
               border: '1px solid var(--border-color)',
@@ -144,15 +144,15 @@ export default function HomePage() {
           >
             {/* Background glow */}
             <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full opacity-20 blur-3xl pointer-events-none"
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-48 sm:w-96 h-48 sm:h-96 rounded-full opacity-20 blur-3xl pointer-events-none"
               style={{ background: 'var(--accent)' }}
             />
 
             <div className="relative z-10">
-              <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl tracking-wide text-[var(--text-primary)] mb-3">
+              <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl tracking-wide text-[var(--text-primary)] mb-2 sm:mb-3">
                 Join Our Community
               </h2>
-              <p className="text-[var(--text-secondary)] text-sm md:text-base max-w-lg mx-auto mb-6">
+              <p className="text-[var(--text-secondary)] text-xs sm:text-sm md:text-base max-w-lg mx-auto mb-4 sm:mb-6">
                 Stay updated with the latest manga releases, join discussions, and connect with fellow manga enthusiasts!
               </p>
 

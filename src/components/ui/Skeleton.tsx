@@ -21,6 +21,6 @@ export function MangaCardSkeleton() {
 
 export function HeroSkeleton() {
   return (
-    <Skeleton className="w-full h-[500px] rounded-none" />
+    <Skeleton className="w-full h-[260px] sm:h-[350px] md:h-[450px] lg:h-[500px] rounded-xl" />
   );
 }

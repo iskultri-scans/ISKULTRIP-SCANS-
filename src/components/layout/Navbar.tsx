@@ -69,11 +69,11 @@ export function Navbar({ genres }: NavbarProps) {
           borderColor: 'var(--border-color)',
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
           {/* Left: Logo */}
           <Link
             href="/"
-            className="font-['Bebas_Neue'] text-2xl tracking-widest"
+            className="font-['Bebas_Neue'] text-lg sm:text-2xl tracking-widest"
             style={{ color: 'var(--accent)' }}
           >
             ISKULTRIP SCANS

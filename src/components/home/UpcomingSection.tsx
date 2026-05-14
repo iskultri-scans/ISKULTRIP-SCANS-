@@ -15,10 +15,10 @@ interface UpcomingSectionProps {
 export function UpcomingSection({ releases, loading = false }: UpcomingSectionProps) {
   if (loading) {
     return (
-      <section className="py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Clock size={24} className="text-[var(--accent)]" />
-          <h2 className="font-['Bebas_Neue'] text-2xl tracking-wide text-[var(--text-primary)]">
+      <section className="py-4 sm:py-8">
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <Clock size={20} className="text-[var(--accent)] sm:!w-6 sm:!h-6" />
+          <h2 className="font-['Bebas_Neue'] text-xl sm:text-2xl tracking-wide text-[var(--text-primary)]">
             আসন্ন রিলিজ / Upcoming
           </h2>
         </div>
@@ -34,10 +34,10 @@ export function UpcomingSection({ releases, loading = false }: UpcomingSectionPr
   if (releases.length === 0) return null;
 
   return (
-    <section className="py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Clock size={24} className="text-[var(--accent)]" />
-        <h2 className="font-['Bebas_Neue'] text-2xl tracking-wide text-[var(--text-primary)]">
+    <section className="py-4 sm:py-8">
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <Clock size={20} className="text-[var(--accent)] sm:!w-6 sm:!h-6" />
+        <h2 className="font-['Bebas_Neue'] text-xl sm:text-2xl tracking-wide text-[var(--text-primary)]">
           আসন্ন রিলিজ / Upcoming Releases
         </h2>
       </div>

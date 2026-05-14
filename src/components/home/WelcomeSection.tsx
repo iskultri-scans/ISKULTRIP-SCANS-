@@ -17,11 +17,11 @@ export function WelcomeSection() {
   };
 
   return (
-    <section className="pt-8 pb-4">
+    <section className="pt-4 sm:pt-8 pb-2 sm:pb-4">
       <div className="relative text-center">
         {/* Animated background glow */}
         <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full opacity-20 blur-3xl pointer-events-none"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[150px] sm:h-[300px] rounded-full opacity-20 blur-3xl pointer-events-none"
           style={{ background: 'var(--accent)' }}
           animate={{
             opacity: [0.15, 0.25, 0.15],
@@ -32,7 +32,7 @@ export function WelcomeSection() {
 
         {/* Accent lines */}
         <motion.div
-          className="mx-auto mb-6 h-[2px] w-0"
+          className="mx-auto mb-3 sm:mb-6 h-[2px] w-0"
           style={{ background: 'linear-gradient(90deg, transparent, var(--accent), transparent)' }}
           animate={{ width: ['0%', '60%', '60%'] }}
           transition={{ duration: 1.5, ease: 'easeOut' }}
@@ -43,7 +43,7 @@ export function WelcomeSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="font-['Bebas_Neue'] text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-wide mb-3"
+          className="font-['Bebas_Neue'] text-2xl sm:text-4xl md:text-6xl lg:text-7xl tracking-wide mb-2 sm:mb-3"
           style={{ color: 'var(--accent)' }}
         >
           বাংলায় মাঙ্গা অনুবাদের সেরা ঠিকানা
@@ -54,7 +54,7 @@ export function WelcomeSection() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15 }}
-          className="text-[var(--text-secondary)] text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-2"
+          className="text-[var(--text-secondary)] text-sm sm:text-base md:text-xl max-w-2xl mx-auto mb-1 sm:mb-2"
         >
           ISKULTRIP SCANS — বাংলা মাঙ্গা পড়ুন, আবিষ্কার করুন নতুন সিরিজ
         </motion.p>
@@ -64,7 +64,7 @@ export function WelcomeSection() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-[var(--text-muted)] text-sm mb-8"
+          className="text-[var(--text-muted)] text-xs sm:text-sm mb-4 sm:mb-8"
         >
           <Sparkles size={14} className="inline mr-1 text-[var(--accent)]" />
           সেরা বাংলা মাঙ্গা অনুবাদ এখানে — Read manga in Bengali
@@ -102,7 +102,7 @@ export function WelcomeSection() {
 
         {/* Bottom accent line */}
         <motion.div
-          className="mx-auto mt-6 h-[2px] w-0"
+          className="mx-auto mt-3 sm:mt-6 h-[2px] w-0"
           style={{ background: 'linear-gradient(90deg, transparent, var(--accent), transparent)' }}
           animate={{ width: ['0%', '40%', '40%'] }}
           transition={{ duration: 1.5, delay: 0.5, ease: 'easeOut' }}

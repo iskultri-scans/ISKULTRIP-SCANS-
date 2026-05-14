@@ -33,8 +33,8 @@ export function AnnouncementBar({ announcements, loading = false }: Announcement
   if (announcements.length === 0) return null;
 
   return (
-    <div className="py-4">
-      <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
+    <div className="py-2 sm:py-4">
+      <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-1">
         {announcements.map((announcement, index) => {
           const config = typeConfig[announcement.type] || typeConfig.announcement;
           return (

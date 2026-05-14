@@ -174,9 +174,14 @@ body::before {
   color: #0a0a0f;
   font-weight: 700;
   border-radius: 8px;
-  padding: 12px 28px;
+  padding: 8px 18px;
   transition: all 0.3s ease;
   box-shadow: 0 0 15px var(--accent-glow);
+}
+@media (min-width: 640px) {
+  .btn-accent {
+    padding: 12px 28px;
+  }
 }
 .btn-accent:hover {
   box-shadow: 0 0 25px var(--accent-glow-strong), 0 0 50px var(--accent-glow);
@@ -228,13 +233,19 @@ body::before {
 /* ─── Genre Chip ───────────────────────────────────── */
 .genre-chip {
   white-space: nowrap;
-  padding: 8px 18px;
+  padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid var(--border-color);
   background: var(--glass-bg);
   backdrop-filter: blur(8px);
   transition: all 0.2s ease;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
+}
+@media (min-width: 640px) {
+  .genre-chip {
+    padding: 8px 18px;
+    font-size: 0.875rem;
+  }
 }
 .genre-chip:hover {
   border-color: var(--accent);
