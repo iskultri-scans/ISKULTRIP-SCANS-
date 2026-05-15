@@ -1,88 +1,45 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { SITE_CONFIG } from '@/lib/config';
+import { getDocs, collection, query, where, limit } from 'firebase/firestore';
+import { getFirebaseDb } from '@/lib/firebase';
 import { MangaDetailClient } from './MangaDetailClient';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip-scans.vercel.app';
-const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
 // Enable dynamic rendering for all manga slugs (fixes 404 on direct URL access)
 export const dynamicParams = true;
 
-// ─── Server-side manga fetch with multiple fallbacks ────────────────
-// Priority: 1) Internal API route  2) Firebase REST API  3) Admin SDK
-// This ensures OG tags and page rendering work regardless of env var setup.
+// Revalidate every 5 minutes (ISR — balances freshness with performance)
+export const revalidate = 300;
+
+// ─── Server-side manga fetch ──────────────────────────────────────
+// Priority: 1) Firebase Client SDK (works with Firestore Security Rules)
+//           2) Firebase Admin SDK (bypasses rules, needs service-account env vars)
+//
+// NOTE: The Firebase REST API (runQuery) is NOT used because it requires an
+// OAuth2 access token — without one the request returns 401.  The Client SDK
+// on the other hand respects Security Rules, and our rules allow
+// "allow read: if true;" so unauthenticated reads succeed.
 
 async function getMangaForMetadata(slug: string): Promise<Record<string, unknown> | null> {
-  // Method 1: Try internal API route (most reliable, uses Firestore client SDK)
+  // Method 1: Firebase Client SDK (most reliable — uses Firestore Security Rules)
   try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/manga/slug?slug=${encodeURIComponent(slug)}`, {
-      next: { revalidate: 60 },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.id) return data;
+    const db = getFirebaseDb();
+    const q = query(collection(db, 'manga'), where('slug', '==', slug), limit(1));
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      return {
+        id: doc.id,
+        ...doc.data(),
+      } as Record<string, unknown>;
     }
   } catch (error) {
-    // This may fail during build or on localhost — that's OK, we have fallbacks
+    console.error('[getMangaForMetadata] Client SDK error:', error);
   }
 
-  // Method 2: Try Firebase REST API directly (no auth needed for public reads)
-  try {
-    const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        structuredQuery: {
-          from: [{ collectionId: 'manga' }],
-          where: {
-            fieldFilter: {
-              field: { fieldPath: 'slug' },
-              op: 'EQUAL',
-              value: { stringValue: slug },
-            },
-          },
-          limit: 1,
-        },
-      }),
-      next: { revalidate: 60 },
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.length > 0 && data[0].document) {
-        const doc = data[0].document;
-        const fields = doc.fields || {};
-        const docName = doc.name || '';
-        const id = docName.split('/').pop() || '';
-
-        return {
-          id,
-          title: extractString(fields, 'title'),
-          titleBn: extractString(fields, 'titleBn'),
-          description: extractString(fields, 'description'),
-          coverImage: extractString(fields, 'coverImage'),
-          bannerImage: extractString(fields, 'bannerImage'),
-          slug: extractString(fields, 'slug'),
-          author: extractString(fields, 'author'),
-          status: extractString(fields, 'status'),
-          language: extractString(fields, 'language'),
-          rating: extractNumber(fields, 'rating'),
-          totalChapters: extractNumber(fields, 'totalChapters'),
-          genres: extractStringArray(fields, 'genres'),
-        };
-      }
-    }
-  } catch (error) {
-    console.error('REST API manga fetch error:', error);
-  }
-
-  // Method 3: Try Firebase Admin SDK as final fallback
+  // Method 2: Firebase Admin SDK fallback (bypasses Security Rules, needs service-account env vars)
   try {
     const { getAdminApp } = await import('@/lib/firebase-admin');
     const adminApp = getAdminApp();
@@ -102,40 +59,10 @@ async function getMangaForMetadata(slug: string): Promise<Record<string, unknown
       } as Record<string, unknown>;
     }
   } catch (error) {
-    console.error('Admin SDK manga fetch error:', error);
+    console.error('[getMangaForMetadata] Admin SDK error:', error);
   }
 
   return null;
-}
-
-// ─── Firestore field extraction helpers ─────────────────────────────
-
-type FirestoreField = {
-  stringValue?: string;
-  integerValue?: string;
-  doubleValue?: string;
-  booleanValue?: string;
-  arrayValue?: { values?: Array<{ stringValue?: string }> };
-  timestampValue?: string;
-  nullValue?: unknown;
-  mapValue?: { fields?: Record<string, FirestoreField> };
-};
-
-function extractString(fields: Record<string, FirestoreField>, key: string): string {
-  const f = fields[key];
-  return f?.stringValue || '';
-}
-
-function extractNumber(fields: Record<string, FirestoreField>, key: string): number {
-  const f = fields[key];
-  if (f?.integerValue) return parseInt(f.integerValue, 10);
-  if (f?.doubleValue) return parseFloat(f.doubleValue);
-  return 0;
-}
-
-function extractStringArray(fields: Record<string, FirestoreField>, key: string): string[] {
-  const f = fields[key];
-  return f?.arrayValue?.values?.map((v) => v.stringValue || '').filter(Boolean) || [];
 }
 
 // ─── Helper: absolute URL for OG images ─────────────────────────────
