@@ -3,7 +3,7 @@
 export const SITE_CONFIG = {
   name: 'ISKULTRIP SCANS',
   creator: 'MD MEHADI HASAN',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip-scans.vercel.app',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip-scans-.vercel.app',
   description: 'বাংলায় মাঙ্গা অনুবাদের সেরা ঠিকানা — Your gateway to manga in Bengali. Browse, discover, and read.',
 
   // Social Media Links
@@ -13,5 +13,5 @@ export const SITE_CONFIG = {
   },
 
   // Admin
-  adminEmail: process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'mdhasan@example.com',
+  adminEmail: process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'bongmanga.official@gmail.com',
 };
