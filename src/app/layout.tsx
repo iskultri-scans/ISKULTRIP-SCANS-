@@ -7,8 +7,7 @@ import { NotificationProvider } from '@/context/NotificationContext';
 import { ContentModeProvider } from '@/context/ContentModeContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { PWAInstallPrompt } from '@/components/layout/PWAInstallPrompt';
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip-scans.vercel.app';
+import { SITE_URL } from '@/lib/site-url';
 
 export const viewport: Viewport = {
   width: 'device-width',

@@ -1,9 +1,10 @@
 // Site-wide configuration constants
+import { SITE_URL } from './site-url';
 
 export const SITE_CONFIG = {
   name: 'ISKULTRIP SCANS',
   creator: 'MD MEHADI HASAN',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip-scans-.vercel.app',
+  url: SITE_URL,
   description: 'বাংলায় মাঙ্গা অনুবাদের সেরা ঠিকানা — Your gateway to manga in Bengali. Browse, discover, and read.',
 
   // Social Media Links

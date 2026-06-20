@@ -5,8 +5,7 @@ import { getFirebaseDb } from '@/lib/firebase';
 import { MangaDetailClient } from './MangaDetailClient';
 import type { Manga, Genre, Chapter } from '@/lib/firestore';
 import { getAllGenres, getChaptersByMangaId } from '@/lib/firestore';
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip-scans.vercel.app';
+import { SITE_URL } from '@/lib/site-url';
 
 // Enable dynamic rendering for all manga slugs (fixes 404 on direct URL access)
 export const dynamicParams = true;

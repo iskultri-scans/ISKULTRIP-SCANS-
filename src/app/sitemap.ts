@@ -1,8 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getDocs, collection, where, limit, query } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip-scans.vercel.app';
+import { SITE_URL as BASE_URL } from '@/lib/site-url';
 
 // Static pages — these are always present
 function getStaticPages(): MetadataRoute.Sitemap {
