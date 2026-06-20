@@ -2,69 +2,73 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: check if the requester is authenticated.
-    // Admin access is controlled by the Next.js admin layout (client-side auth check).
-    // Firestore rules ensure data is only accessible by authenticated users.
+    // ─── Helpers ─────────────────────────────────────────────
+    // Check if the requester is authenticated.
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Helper: check if the requester is an admin.
-    // NOTE: Firestore rules cannot read env vars. To change the admin email,
-    // update the email string below and redeploy the rules:
+    // Check if the requester is an admin.
+    // 🔒 SECURITY: This is the ONLY way to get write access to public data.
+    // To change the admin email, update the email string below and redeploy:
     //   firebase deploy --only firestore:rules
     function isAdminEmail() {
       return request.auth.token.email == 'bongmanga.official@gmail.com';
     }
 
-    // Anyone can read manga and genres; authenticated users can write
+    // ─── Public-readable, admin-writable collections ─────────
+    // Anyone can READ; only the admin email can WRITE.
+    // This prevents any logged-in user from deleting or modifying content.
+
     match /manga/{mangaId} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow write: if isAdminEmail();
 
-      // Chapters subcollection
+      // Chapters subcollection — same rules as parent manga
       match /chapters/{chapterId} {
         allow read: if true;
-        allow write: if isAuthenticated();
+        allow write: if isAdminEmail();
       }
     }
 
-    // Anyone can read genres; authenticated users can write
     match /genres/{genreId} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow write: if isAdminEmail();
     }
 
-    // Users can only access their own bookmarks
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdminEmail();
+    }
+
+    match /upcomingReleases/{upcomingReleaseId} {
+      allow read: if true;
+      allow write: if isAdminEmail();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow write: if isAdminEmail();
+    }
+
+    // ─── User-private data ──────────────────────────────────
+    // Each user can only access their OWN bookmarks subcollection.
     match /users/{userId}/bookmarks/{bookmarkId} {
-      allow read, write: if request.auth != null
+      allow read, write: if isAuthenticated()
         && request.auth.uid == userId;
     }
 
-    // Requests: anyone can create and read; updates allowed
+    // ─── Manga Requests (community feature) ─────────────────
+    // Anyone (even anonymous) can create a request or upvote.
+    // Only admin can delete. Updates are restricted to upvote field only.
     match /requests/{requestId} {
+      allow read: if true;
       allow create: if true;
-      allow update: if true;
-      allow read: if true;
-      allow delete: if request.auth != null;
-    }
-
-    // Announcements: anyone can read; authenticated users can write
-    match /announcements/{announcementId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-
-    // Notifications: only authenticated users can read and write
-    match /notifications/{notificationId} {
-      allow read: if request.auth != null;
-      allow write: if isAuthenticated();
-    }
-
-    // Upcoming Releases: anyone can read; authenticated users can write
-    match /upcomingReleases/{upcomingReleaseId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+      // Only allow updates to upvote-related fields (prevent tampering with status, description, etc.)
+      allow update: if request.resource.data.diff(resource.data)
+        .affectedKeys()
+        .hasOnly(['upvotes', 'upvotedBy', 'updatedAt']);
+      allow delete: if isAdminEmail();
     }
   }
 }

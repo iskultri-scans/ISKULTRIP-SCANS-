@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { BookmarkProvider } from '@/context/BookmarkContext';
 import { NotificationProvider } from '@/context/NotificationContext';
+import { ContentModeProvider } from '@/context/ContentModeContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { PWAInstallPrompt } from '@/components/layout/PWAInstallPrompt';
 
@@ -91,14 +92,16 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col" style={{ fontFamily: "'DM Sans', sans-serif" }}>
         <ThemeProvider>
           <AuthProvider>
-            <BookmarkProvider>
-              <NotificationProvider>
-                <ToastProvider>
-                  {children}
-                  <PWAInstallPrompt />
-                </ToastProvider>
-              </NotificationProvider>
-            </BookmarkProvider>
+            <ContentModeProvider>
+              <BookmarkProvider>
+                <NotificationProvider>
+                  <ToastProvider>
+                    {children}
+                    <PWAInstallPrompt />
+                  </ToastProvider>
+                </NotificationProvider>
+              </BookmarkProvider>
+            </ContentModeProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -62,6 +62,7 @@ export default function EditMangaPage() {
         language: data.language as 'en' | 'bn',
         featured: data.featured as boolean,
         trending: data.trending as boolean,
+        isAdult: (data.isAdult as boolean) || false,
       });
       showToast('Manga updated successfully!', 'success');
       router.push('/admin/manga');

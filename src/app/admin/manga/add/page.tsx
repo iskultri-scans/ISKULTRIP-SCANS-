@@ -58,6 +58,7 @@ export default function AddMangaPage() {
         language: data.language as 'en' | 'bn',
         featured: data.featured as boolean,
         trending: data.trending as boolean,
+        isAdult: (data.isAdult as boolean) || false,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       });

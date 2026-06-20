@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
 import { LanguageBadge } from './LanguageBadge';
 import { BookmarkButton } from './BookmarkButton';
+import { AdultBadge } from './AdultBadge';
 import { useBookmarks } from '@/context/BookmarkContext';
 import type { Manga } from '@/lib/firestore';
 
@@ -44,11 +45,19 @@ export function MangaCard({ manga, index = 0, showRank = false, rank }: MangaCar
               <LanguageBadge language={manga.language} />
             </div>
 
+            {/* Adult Badge (18+) - shown in Adult Mode */}
+            {manga.isAdult && (
+              <div className="absolute top-2 left-12 z-10">
+                <AdultBadge size="sm" />
+              </div>
+            )}
+
             {/* Rank Badge - moved to avoid bookmark overlap */}
             {showRank && rank && (
               <div
-                className="absolute top-2 left-14 z-10 w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold"
+                className="absolute top-2 z-10 w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold"
                 style={{
+                  left: manga.isAdult ? '20' : '14',
                   background: rank <= 3 ? 'var(--accent)' : 'var(--glass-bg)',
                   color: rank <= 3 ? '#0a0a0f' : 'var(--text-primary)',
                   border: rank > 3 ? '1px solid var(--border-color)' : 'none',

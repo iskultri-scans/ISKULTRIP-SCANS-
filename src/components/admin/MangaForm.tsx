@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { slugify } from '@/lib/utils';
 import { CustomDropdown, type DropdownOption } from '@/components/ui/CustomDropdown';
-import { Clock, CheckCircle, Pause, Globe, Search, Sparkles, X, Loader2 } from 'lucide-react';
+import { Clock, CheckCircle, Pause, Globe, Search, Sparkles, X, Loader2, ShieldAlert } from 'lucide-react';
 import { searchMangaJikan, getMangaDetailJikan, jikanToAutoFill, type JikanMangaSearchResult, type AutoFillData } from '@/lib/jikan';
 import type { Manga } from '@/lib/firestore';
 
@@ -43,6 +43,7 @@ const defaultForm = {
   language: 'en' as string,
   featured: false,
   trending: false,
+  isAdult: false,
 };
 
 function buildFormFromInitial(initialData?: Partial<Manga>) {
@@ -63,6 +64,7 @@ function buildFormFromInitial(initialData?: Partial<Manga>) {
     language: initialData.language || 'en',
     featured: initialData.featured || false,
     trending: initialData.trending || false,
+    isAdult: initialData.isAdult || false,
   };
 }
 
@@ -535,6 +537,35 @@ export function MangaForm({ initialData, onSubmit, genres, loading = false, subm
             className="w-4 h-4 rounded accent-[var(--accent)]"
           />
           <span className="text-sm text-[var(--text-secondary)]">Trending</span>
+        </label>
+      </div>
+
+      {/* Adult Content — separate section for visibility */}
+      <div
+        className="rounded-xl p-4"
+        style={{
+          background: form.isAdult ? 'rgba(239, 68, 68, 0.08)' : 'var(--bg-primary)',
+          border: `1px solid ${form.isAdult ? 'rgba(239, 68, 68, 0.3)' : 'var(--border-color)'}`,
+        }}
+      >
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.isAdult}
+            onChange={(e) => handleCheckbox('isAdult', e.target.checked)}
+            className="w-4 h-4 mt-0.5 rounded accent-red-500 flex-shrink-0"
+          />
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <ShieldAlert size={16} className="text-red-500" />
+              <span className="text-sm font-semibold text-[var(--text-primary)]">
+                Adult Content (18+)
+              </span>
+            </div>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+              এই manga-তে 18+ কনটেন্ট আছে। Family Mode-এ এটি লুকানো থাকবে এবং শুধুমাত্র verified adult user-দের কাছে দেখাবে।
+            </p>
+          </div>
         </label>
       </div>
 

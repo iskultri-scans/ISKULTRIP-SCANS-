@@ -6,6 +6,7 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { MangaGrid } from '@/components/manga/MangaGrid';
 import { SearchInput } from '@/components/browse/SearchInput';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useContentMode } from '@/context/ContentModeContext';
 import { searchManga, getAllGenres, type Manga, type Genre } from '@/lib/firestore';
 
 function SearchContent() {
@@ -19,6 +20,7 @@ function SearchContent() {
 
   const debouncedQuery = useDebounce(query, 300);
   const hasQuery = debouncedQuery.trim().length > 0;
+  const { filterByMode } = useContentMode();
 
   useEffect(() => {
     getAllGenres().then(setGenres);
@@ -46,7 +48,8 @@ function SearchContent() {
   }, [debouncedQuery, hasQuery]);
 
   // Reset results when query is cleared
-  const displayResults = hasQuery ? results : [];
+  // 🔒 Family Mode: filter out adult manga
+  const displayResults = hasQuery ? filterByMode(results) : [];
 
   const genreSlugs = genres.map((g) => ({ name: g.name, slug: g.slug }));
 

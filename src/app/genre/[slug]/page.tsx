@@ -8,6 +8,7 @@ import { FilterBar } from '@/components/browse/FilterBar';
 import { Pagination } from '@/components/ui/Pagination';
 import { usePagination } from '@/hooks/usePagination';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useContentMode } from '@/context/ContentModeContext';
 import { getAllManga, getAllGenres, getGenreBySlug, type Manga, type Genre } from '@/lib/firestore';
 
 export default function GenrePage() {
@@ -24,6 +25,7 @@ export default function GenrePage() {
   const [sort, setSort] = useState('newest');
 
   const debouncedSearch = useDebounce(search, 300);
+  const { filterByMode } = useContentMode();
 
   useEffect(() => {
     async function fetchData() {
@@ -46,7 +48,8 @@ export default function GenrePage() {
   }, [slug]);
 
   const filteredManga = useMemo(() => {
-    let result = [...allManga];
+    // 🔒 Family Mode: filter out adult manga
+    let result = filterByMode(allManga);
 
     // Filter by genre
     result = result.filter((m) =>
@@ -82,7 +85,7 @@ export default function GenrePage() {
     }
 
     return result;
-  }, [allManga, slug, debouncedSearch, language, status, sort]);
+  }, [allManga, slug, debouncedSearch, language, status, sort, filterByMode]);
 
   const { currentItems, currentPage, totalPages, goToPage, hasNext, hasPrev } =
     usePagination(filteredManga, 20);

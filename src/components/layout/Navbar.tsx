@@ -8,6 +8,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { MobileMenu } from './MobileMenu';
 import { UserMenu } from './UserMenu';
 import { NotificationBell } from './NotificationBell';
+import { ContentModeToggle } from './ContentModeToggle';
 import { useRouter } from 'next/navigation';
 import { SITE_CONFIG } from '@/lib/config';
 import { useBookmarks } from '@/context/BookmarkContext';
@@ -217,6 +218,9 @@ export function Navbar({ genres }: NavbarProps) {
 
             {/* Divider */}
             <div className="hidden md:block w-px h-4" style={{ background: 'var(--border-color)' }} />
+
+            {/* Content Mode Toggle (Adult/Family) */}
+            <ContentModeToggle />
 
             {/* Notification Bell */}
             <div className="hidden sm:block">

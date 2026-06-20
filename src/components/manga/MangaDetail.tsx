@@ -9,6 +9,7 @@ import { GenreTags } from './GenreTags';
 import { ShareButtons } from './ShareButtons';
 import { ChapterList } from './ChapterList';
 import { BookmarkButton } from './BookmarkButton';
+import { AdultBadge } from './AdultBadge';
 import { useBookmarks } from '@/context/BookmarkContext';
 import { formatRelativeTime } from '@/lib/utils';
 import type { Manga } from '@/lib/firestore';
@@ -78,11 +79,12 @@ export function MangaDetail({ manga }: MangaDetailProps) {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex-1 pt-2 md:pt-8 text-center md:text-left"
           >
-            <div className="flex items-start justify-center md:justify-start gap-3 mb-2">
+            <div className="flex items-start justify-center md:justify-start gap-3 mb-2 flex-wrap">
               <h1 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl tracking-wide text-[var(--text-primary)]">
                 {manga.title}
               </h1>
               <LanguageBadge language={manga.language} />
+              {manga.isAdult && <AdultBadge size="md" variant="banner" />}
             </div>
 
             {manga.titleBn && (

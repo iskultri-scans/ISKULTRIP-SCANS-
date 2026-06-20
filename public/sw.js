@@ -2,12 +2,14 @@ const CACHE_NAME = 'iskultrip-v1';
 const STATIC_ASSETS = [
   '/',
   '/browse',
-  '/bookmarks',
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
   '/no-cover.png',
 ];
+
+// ❌ Removed '/bookmarks' from static cache — that page is auth-required
+// and caching it offline could leak data to logged-out users on shared devices.
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {

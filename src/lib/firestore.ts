@@ -44,6 +44,8 @@ export interface Manga {
   readLink?: string;
   featured: boolean;
   trending: boolean;
+  /** 18+ adult content flag. Family Mode-এ এই manga গুলো লুকানো হয়। */
+  isAdult?: boolean;
   chapters?: Chapter[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -160,29 +162,50 @@ export async function getMangaById(id: string): Promise<Manga | null> {
   }
 }
 
-// FIX: Avoid composite index - use only orderBy, filter client-side
+// ✅ Uses proper Firestore where() + orderBy() with composite index.
+// Composite index required (auto-created on first query failure, or set up in Firebase Console):
+//   Collection: manga | Fields: featured (Ascending), updatedAt (Descending)
 export async function getFeaturedManga(): Promise<Manga[]> {
   try {
-    // Fetch manga ordered by updatedAt (single-field index only)
-    const allManga = await getAllManga([orderBy('updatedAt', 'desc'), limit(50)]);
-    // Filter featured client-side
-    return allManga.filter((m) => m.featured === true).slice(0, 10);
+    const allManga = await getAllManga([
+      where('featured', '==', true),
+      orderBy('updatedAt', 'desc'),
+      limit(10),
+    ]);
+    return allManga;
   } catch (error) {
-    console.error('Error fetching featured manga:', error);
-    return [];
+    // Fallback: client-side filter if composite index not yet created
+    console.warn('[getFeaturedManga] Falling back to client-side filter. Create composite index:', error);
+    try {
+      const allManga = await getAllManga([orderBy('updatedAt', 'desc'), limit(50)]);
+      return allManga.filter((m) => m.featured === true).slice(0, 10);
+    } catch (err) {
+      console.error('Error fetching featured manga:', err);
+      return [];
+    }
   }
 }
 
-// FIX: Avoid composite index - use only orderBy, filter client-side
+// ✅ Uses proper Firestore where() + orderBy() with composite index.
+// Composite index required:
+//   Collection: manga | Fields: trending (Ascending), rating (Descending)
 export async function getTrendingManga(): Promise<Manga[]> {
   try {
-    // Fetch manga ordered by rating (single-field index only)
-    const allManga = await getAllManga([orderBy('rating', 'desc'), limit(50)]);
-    // Filter trending client-side
-    return allManga.filter((m) => m.trending === true).slice(0, 20);
+    const allManga = await getAllManga([
+      where('trending', '==', true),
+      orderBy('rating', 'desc'),
+      limit(20),
+    ]);
+    return allManga;
   } catch (error) {
-    console.error('Error fetching trending manga:', error);
-    return [];
+    console.warn('[getTrendingManga] Falling back to client-side filter. Create composite index:', error);
+    try {
+      const allManga = await getAllManga([orderBy('rating', 'desc'), limit(50)]);
+      return allManga.filter((m) => m.trending === true).slice(0, 20);
+    } catch (err) {
+      console.error('Error fetching trending manga:', err);
+      return [];
+    }
   }
 }
 
@@ -191,16 +214,26 @@ export async function getLatestManga(count = 20): Promise<Manga[]> {
   return getAllManga([orderBy('createdAt', 'desc'), limit(count)]);
 }
 
-// FIX: Avoid composite index - use only orderBy, filter client-side
+// ✅ Uses proper Firestore where() + orderBy() with composite index.
+// Composite index required:
+//   Collection: manga | Fields: language (Ascending), updatedAt (Descending)
 export async function getMangaByLanguage(language: 'en' | 'bn', count = 10): Promise<Manga[]> {
   try {
-    // Fetch latest manga ordered by updatedAt (single-field index only)
-    const allManga = await getAllManga([orderBy('updatedAt', 'desc'), limit(50)]);
-    // Filter by language client-side
-    return allManga.filter((m) => m.language === language).slice(0, count);
+    const allManga = await getAllManga([
+      where('language', '==', language),
+      orderBy('updatedAt', 'desc'),
+      limit(count),
+    ]);
+    return allManga;
   } catch (error) {
-    console.error('Error fetching manga by language:', error);
-    return [];
+    console.warn('[getMangaByLanguage] Falling back to client-side filter. Create composite index:', error);
+    try {
+      const allManga = await getAllManga([orderBy('updatedAt', 'desc'), limit(50)]);
+      return allManga.filter((m) => m.language === language).slice(0, count);
+    } catch (err) {
+      console.error('Error fetching manga by language:', err);
+      return [];
+    }
   }
 }
 
@@ -410,15 +443,32 @@ export async function isBookmarked(userId: string, mangaId: string): Promise<boo
 
 export async function getBookmarkedManga(userId: string): Promise<Manga[]> {
   const bookmarks = await getUserBookmarks(userId);
+  if (bookmarks.length === 0) return [];
+
+  const db = getFirebaseDb();
   const mangaList: Manga[] = [];
 
-  for (const bm of bookmarks) {
-    const snap = await getDoc(doc(getFirebaseDb(), 'manga', bm.mangaId));
-    if (snap.exists()) {
-      const manga = { id: snap.id, ...snap.data() } as Manga;
+  // ✅ Batch fetch using where('in', ...) — Firestore allows up to 10 IDs per query.
+  // For more than 10 bookmarks, we chunk and run multiple parallel queries.
+  const chunkSize = 10;
+  const chunks: string[][] = [];
+  for (let i = 0; i < bookmarks.length; i += chunkSize) {
+    chunks.push(bookmarks.slice(i, i + chunkSize).map((b) => b.mangaId));
+  }
+
+  const results = await Promise.all(
+    chunks.map((ids) => getDocs(query(collection(db, 'manga'), where('__name__', 'in', ids))))
+  );
+
+  // Preserve bookmark order
+  const orderMap = new Map(bookmarks.map((b, i) => [b.mangaId, i]));
+  for (const snap of results) {
+    for (const docSnap of snap.docs) {
+      const manga = { id: docSnap.id, ...docSnap.data() } as Manga;
       mangaList.push(manga);
     }
   }
+  mangaList.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
 
   return mangaList;
 }

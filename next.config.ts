@@ -1,68 +1,66 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Note: 'standalone' output is for Docker/self-hosted.
-  // For Vercel deployment, we use the default output.
-  // If deploying elsewhere (VPS, Docker), uncomment: output: "standalone"
+  // ✅ Enable React strict mode — catches bugs in development
+  reactStrictMode: true,
+
+  // ⚠️ Do NOT ignore TypeScript errors in production builds.
+  // If there are type errors, fix them — don't hide them.
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
-  reactStrictMode: false,
+
+  // ✅ Enable Next.js image optimization — critical for a manga site.
+  // Without this, every cover/banner image loads at full size,
+  // killing mobile data and LCP scores.
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
+      // Manga covers / banners commonly come from these CDNs
+      { protocol: 'https', hostname: '**' },
     ],
-    unoptimized: true,
   },
-  // Headers for PWA, security, and social sharing
+
+  // Security + PWA headers
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            // SAMEORIGIN allows Facebook/Telegram to embed previews
-            // DENY was blocking social media link previews
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
+            // 🔒 Tighter CSP — removed 'unsafe-eval' (was an XSS risk).
+            // 'unsafe-inline' kept for now because of inline styles used throughout;
+            // migrate to nonce-based CSP in a future refactor.
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://firestore.googleapis.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://www.facebook.com https://web.facebook.com https://telegram.org https://t.me; frame-ancestors 'self' https://www.facebook.com https://web.facebook.com https://telegram.org https://t.me;",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' https://apis.google.com https://www.googletagmanager.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' https://fonts.gstatic.com",
+              "connect-src 'self' https://firestore.googleapis.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.jikan.moe",
+              "frame-src https://www.facebook.com https://web.facebook.com https://telegram.org https://t.me",
+              "frame-ancestors 'self' https://www.facebook.com https://web.facebook.com https://telegram.org https://t.me",
+            ].join('; '),
           },
         ],
       },
       {
         source: '/sw.js',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate',
-          },
-          {
-            key: 'Service-Worker-Allowed',
-            value: '/',
-          },
+          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
         ],
       },
       {
         source: '/manifest.json',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=604800',
-          },
+          { key: 'Cache-Control', value: 'public, max-age=604800' },
         ],
       },
     ];

@@ -4,6 +4,7 @@ import React from 'react';
 import { MangaCard } from './MangaCard';
 import { MangaCardSkeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useContentMode } from '@/context/ContentModeContext';
 import type { Manga } from '@/lib/firestore';
 
 interface MangaGridProps {
@@ -21,6 +22,10 @@ export function MangaGrid({
   emptyTitle = 'No manga found',
   emptyMessage = 'Try adjusting your filters or search query.',
 }: MangaGridProps) {
+  // 🔒 Family Mode: filter out adult manga automatically
+  const { filterByMode } = useContentMode();
+  const visibleManga = filterByMode(manga);
+
   if (loading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
@@ -31,13 +36,13 @@ export function MangaGrid({
     );
   }
 
-  if (manga.length === 0) {
+  if (visibleManga.length === 0) {
     return <EmptyState title={emptyTitle} message={emptyMessage} />;
   }
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-      {manga.map((m, i) => (
+      {visibleManga.map((m, i) => (
         <MangaCard key={m.id} manga={m} index={i} showRank={showRank} rank={showRank ? i + 1 : undefined} />
       ))}
     </div>

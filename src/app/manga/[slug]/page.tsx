@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import { getDocs, collection, query, where, limit } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import { MangaDetailClient } from './MangaDetailClient';
+import type { Manga, Genre, Chapter } from '@/lib/firestore';
+import { getAllGenres, getChaptersByMangaId } from '@/lib/firestore';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://iskultrip-scans.vercel.app';
 
@@ -15,31 +17,27 @@ export const revalidate = 300;
 // ─── Server-side manga fetch ──────────────────────────────────────
 // Priority: 1) Firebase Client SDK (works with Firestore Security Rules)
 //           2) Firebase Admin SDK (bypasses rules, needs service-account env vars)
-//
-// NOTE: The Firebase REST API (runQuery) is NOT used because it requires an
-// OAuth2 access token — without one the request returns 401.  The Client SDK
-// on the other hand respects Security Rules, and our rules allow
-// "allow read: if true;" so unauthenticated reads succeed.
 
-async function getMangaForMetadata(slug: string): Promise<Record<string, unknown> | null> {
-  // Method 1: Firebase Client SDK (most reliable — uses Firestore Security Rules)
+async function getMangaForServer(slug: string): Promise<{ manga: Manga; docId: string } | null> {
+  // Method 1: Firebase Client SDK
   try {
     const db = getFirebaseDb();
     const q = query(collection(db, 'manga'), where('slug', '==', slug), limit(1));
     const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
-      const doc = snapshot.docs[0];
-      return {
-        id: doc.id,
-        ...doc.data(),
-      } as Record<string, unknown>;
+      const docSnap = snapshot.docs[0];
+      const manga = { id: docSnap.id, ...docSnap.data() } as Manga;
+      // Fetch chapters in parallel
+      const chapters = await getChaptersByMangaId(manga.id);
+      manga.chapters = chapters;
+      return { manga, docId: docSnap.id };
     }
   } catch (error) {
-    console.error('[getMangaForMetadata] Client SDK error:', error);
+    console.error('[getMangaForServer] Client SDK error:', error);
   }
 
-  // Method 2: Firebase Admin SDK fallback (bypasses Security Rules, needs service-account env vars)
+  // Method 2: Firebase Admin SDK fallback
   try {
     const { getAdminApp } = await import('@/lib/firebase-admin');
     const adminApp = getAdminApp();
@@ -52,14 +50,20 @@ async function getMangaForMetadata(slug: string): Promise<Record<string, unknown
       .get();
 
     if (!snapshot.empty) {
-      const doc = snapshot.docs[0];
-      return {
-        id: doc.id,
-        ...doc.data(),
-      } as Record<string, unknown>;
+      const docSnap = snapshot.docs[0];
+      const manga = { id: docSnap.id, ...docSnap.data() } as Manga;
+      // Fetch chapters via admin SDK
+      const chaptersSnap = await adminDb
+        .collection('manga')
+        .doc(docSnap.id)
+        .collection('chapters')
+        .orderBy('chapterNumber', 'desc')
+        .get();
+      manga.chapters = chaptersSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Chapter);
+      return { manga, docId: docSnap.id };
     }
   } catch (error) {
-    console.error('[getMangaForMetadata] Admin SDK error:', error);
+    console.error('[getMangaForServer] Admin SDK error:', error);
   }
 
   return null;
@@ -81,20 +85,21 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const manga = await getMangaForMetadata(slug);
+  const result = await getMangaForServer(slug);
 
-  if (!manga) {
+  if (!result) {
     return {
       title: 'Manga Not Found — ISKULTRIP SCANS',
       description: 'The manga you are looking for could not be found.',
     };
   }
 
-  const title = (manga.title as string) || 'Manga';
-  const description = (manga.description as string) || `Read ${title} on ISKULTRIP SCANS — বাংলায় মাঙ্গা পড়ুন`;
-  const coverImage = ensureAbsoluteUrl(manga.coverImage as string | undefined);
+  const manga = result.manga;
+  const title = manga.title || 'Manga';
+  const description = manga.description || `Read ${title} on ISKULTRIP SCANS — বাংলায় মাঙ্গা পড়ুন`;
+  const coverImage = ensureAbsoluteUrl(manga.coverImage);
   const pageUrl = `${SITE_URL}/manga/${slug}`;
-  const titleBn = manga.titleBn as string | undefined;
+  const titleBn = manga.titleBn;
 
   return {
     title: `${title} — ISKULTRIP SCANS`,
@@ -116,7 +121,7 @@ export async function generateMetadata({
         },
       ],
       type: 'article',
-      authors: [(manga.author as string) || 'ISKULTRIP SCANS'],
+      authors: [manga.author || 'ISKULTRIP SCANS'],
     },
     twitter: {
       card: 'summary_large_image',
@@ -135,11 +140,15 @@ export default async function MangaDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const manga = await getMangaForMetadata(slug);
+  const result = await getMangaForServer(slug);
 
-  if (!manga) {
+  if (!result) {
     notFound();
   }
 
-  return <MangaDetailClient slug={slug} />;
+  // ✅ Pass manga data as prop — no duplicate fetch on client
+  const genres = await getAllGenres().catch(() => [] as Genre[]);
+  const genreSlugs = genres.map((g) => ({ name: g.name, slug: g.slug }));
+
+  return <MangaDetailClient manga={result.manga} genreSlugs={genreSlugs} />;
 }
