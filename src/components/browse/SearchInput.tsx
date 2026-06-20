@@ -23,9 +23,8 @@ export function SearchInput({ value, onChange, placeholder = 'Search manga...' }
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-color)',
           color: 'var(--text-primary)',
-          // @ts-exxpect-error CSS custom property
-          '--tw-ring-color': 'var(--accent)',
-        }}
+          ['--tw-ring-color' as string]: 'var(--accent)',
+        } as React.CSSProperties}
       />
     </div>
   );

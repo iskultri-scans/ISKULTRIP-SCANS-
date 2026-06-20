@@ -120,7 +120,7 @@ export function ShareButtons({ title, slug, description, coverImage }: ShareButt
         <span className="text-sm font-medium text-[var(--text-secondary)]">Share:</span>
 
         {/* Native Share button - shown on mobile devices that support it */}
-        {typeof navigator !== 'undefined' && navigator.share && (
+        {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
           <motion.button
             whileHover={{ scale: 1.15 }}
             whileTap={{ scale: 0.9 }}
