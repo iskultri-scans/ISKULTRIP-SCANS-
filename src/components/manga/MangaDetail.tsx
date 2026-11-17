@@ -1,178 +1,136 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { Star, BookOpen, User, Palette, Calendar } from 'lucide-react';
-import { LanguageBadge } from './LanguageBadge';
+import { Star, BookOpen } from 'lucide-react';
 import { GenreTags } from './GenreTags';
 import { ShareButtons } from './ShareButtons';
 import { ChapterList } from './ChapterList';
 import { BookmarkButton } from './BookmarkButton';
 import { AdultBadge } from './AdultBadge';
 import { useBookmarks } from '@/context/BookmarkContext';
-import { formatRelativeTime } from '@/lib/utils';
+import { formatRelativeTime, formatDate } from '@/lib/utils';
+import { FALLBACK_COVER_ASSET } from '@/lib/assets';
 import type { Manga } from '@/lib/firestore';
 
 interface MangaDetailProps {
   manga: Manga;
 }
 
-const fadeUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-};
-
 export function MangaDetail({ manga }: MangaDetailProps) {
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(manga.id);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div>
-      {/* Banner Image */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="relative w-full h-[300px] md:h-[400px] overflow-hidden"
-      >
+      {/* Atmospheric Backdrop */}
+      <div className="relative w-full h-[220px] sm:h-[280px] md:h-[340px] overflow-hidden bg-[#111113]">
         <Image
-          src={manga.bannerImage || manga.coverImage || '/no-cover.png'}
+          src={manga.bannerImage || manga.coverImage || FALLBACK_COVER_ASSET.src}
           alt={manga.title}
           fill
-          className="object-cover"
+          className="object-cover opacity-55"
           unoptimized={true}
           priority
+          referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-primary)]/80 to-transparent" />
-      </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/50 to-transparent" />
+      </div>
 
-      {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 -mt-32 sm:-mt-32 relative z-10">
-        <div className="flex flex-col items-center md:items-start md:flex-row gap-6">
-          {/* Cover */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex-shrink-0"
-          >
-            <div className="relative w-40 sm:w-48 md:w-56 rounded-xl overflow-hidden shadow-2xl group" style={{ aspectRatio: '3/4' }}>
+      {/* Main Editorial Content */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 -mt-28 sm:-mt-32 relative z-10">
+        <div className="flex flex-col items-center md:items-start md:flex-row gap-6 lg:gap-8">
+          {/* Cover Frame */}
+          <div className="shrink-0">
+            <div
+              className="relative w-40 sm:w-48 md:w-56 rounded-lg overflow-hidden shadow-xl border"
+              style={{ aspectRatio: '3/4', borderColor: 'var(--border-color)', background: 'var(--bg-secondary)' }}
+            >
               <Image
-                src={manga.coverImage || '/no-cover.png'}
+                src={manga.coverImage || FALLBACK_COVER_ASSET.src}
                 alt={manga.title}
                 fill
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                className="object-cover"
                 unoptimized={true}
                 priority
+                referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-          </motion.div>
+          </div>
 
-          {/* Info */}
-          <motion.div
-            variants={fadeUp}
-            initial="initial"
-            animate="animate"
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex-1 pt-2 md:pt-8 text-center md:text-left"
-          >
-            <div className="flex items-start justify-center md:justify-start gap-3 mb-2 flex-wrap">
-              <h1 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl tracking-wide text-[var(--text-primary)]">
+          {/* Series Header & Metadata */}
+          <div className="flex-1 pt-1 md:pt-10 text-center md:text-left min-w-0 w-full">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-2">
+              <span className="text-[var(--accent)] font-semibold">{manga.language.toUpperCase()} Edition</span>
+              <span aria-hidden="true">·</span>
+              <span className="capitalize">{manga.status}</span>
+              <span aria-hidden="true">·</span>
+              <span className="inline-flex items-center gap-1 font-mono-num text-[var(--text-primary)]">
+                <Star size={12} className="text-amber-500 fill-amber-500" />
+                {manga.rating}
+              </span>
+              {manga.updatedAt && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>Updated {mounted ? formatRelativeTime(manga.updatedAt) : formatDate(manga.updatedAt)}</span>
+                </>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
+              <h1 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl tracking-tight text-[var(--text-primary)] text-balance">
                 {manga.title}
               </h1>
-              <LanguageBadge language={manga.language} />
               {manga.isAdult && <AdultBadge size="md" variant="banner" />}
             </div>
 
             {manga.titleBn && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-base sm:text-lg text-[var(--text-secondary)] mb-3"
-              >
+              <p className="text-sm sm:text-base text-[var(--text-secondary)] mb-4">
                 {manga.titleBn}
-              </motion.p>
+              </p>
             )}
 
-            {/* Stats Row */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 mb-4">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
-                style={{ background: 'var(--accent-glow)' }}
-              >
-                <Star size={16} className="text-yellow-400 fill-yellow-400" />
-                <span className="font-bold text-sm text-[var(--text-primary)]">{manga.rating}</span>
-              </motion.div>
-              <span className={`text-sm font-semibold capitalize px-3 py-1.5 rounded-lg ${
-                manga.status === 'ongoing' ? 'text-emerald-400 bg-emerald-400/10' :
-                manga.status === 'completed' ? 'text-blue-400 bg-blue-400/10' : 'text-amber-400 bg-amber-400/10'
-              }`}>
-                {manga.status}
-              </span>
-              {manga.updatedAt && (
-                <span className="text-xs text-[var(--text-muted)] flex items-center gap-1">
-                  <Calendar size={12} />
-                  Updated {formatRelativeTime(manga.updatedAt)}
-                </span>
-              )}
-            </div>
+            {/* Key-Value Metadata Grid */}
+            <dl
+              className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-3.5 px-4 rounded-lg mb-4 text-left"
+              style={{
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
+              }}
+            >
+              <div>
+                <dt className="text-[11px] uppercase tracking-wider text-[var(--text-muted)]">Author</dt>
+                <dd className="text-sm font-medium text-[var(--text-primary)] truncate mt-0.5">
+                  {manga.author || 'Unknown'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] uppercase tracking-wider text-[var(--text-muted)]">Artist</dt>
+                <dd className="text-sm font-medium text-[var(--text-primary)] truncate mt-0.5">
+                  {manga.artist || manga.author || 'Unknown'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] uppercase tracking-wider text-[var(--text-muted)]">Chapters</dt>
+                <dd className="text-sm font-mono-num font-semibold text-[var(--text-primary)] mt-0.5">
+                  {manga.totalChapters}
+                </dd>
+              </div>
+            </dl>
 
-            {/* Meta */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-              {manga.author && (
-                <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                  <User size={14} className="text-[var(--accent)]" />
-                  <span>Author: <strong>{manga.author}</strong></span>
-                </div>
-              )}
-              {manga.artist && (
-                <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                  <Palette size={14} className="text-[var(--accent)]" />
-                  <span>Artist: <strong>{manga.artist}</strong></span>
-                </div>
-              )}
-              {manga.totalChapters > 0 && (
-                <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                  <BookOpen size={14} className="text-[var(--accent)]" />
-                  <span>Chapters: <strong>{manga.totalChapters}</strong></span>
-                </div>
-              )}
+            <div className="flex justify-center md:justify-start">
+              <GenreTags genres={manga.genres} />
             </div>
-
-            {/* Genres */}
-            <GenreTags genres={manga.genres} />
-          </motion.div>
+          </div>
         </div>
 
-        {/* Description */}
-        <motion.div
-          variants={fadeUp}
-          initial="initial"
-          animate="animate"
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-8"
-        >
-          <h2 className="font-['Bebas_Neue'] text-xl tracking-wide text-[var(--text-primary)] mb-3">Synopsis</h2>
-          <div
-            className="glass-card p-5 text-[var(--text-secondary)] leading-relaxed whitespace-pre-line"
-          >
-            {manga.description || 'No description available.'}
-          </div>
-        </motion.div>
-
-        {/* Read Now + Bookmark + Share */}
-        <motion.div
-          variants={fadeUp}
-          initial="initial"
-          animate="animate"
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4"
-        >
+        {/* Actions */}
+        <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <BookmarkButton
             manga={manga}
             isBookmarked={bookmarked}
@@ -187,29 +145,40 @@ export function MangaDetail({ manga }: MangaDetailProps) {
             description={manga.description}
             coverImage={manga.coverImage}
           />
-        </motion.div>
+        </div>
+
+        {/* Synopsis */}
+        <div className="mt-8">
+          <h2 className="font-display text-lg font-bold tracking-tight text-[var(--text-primary)] mb-2.5">
+            Synopsis
+          </h2>
+          <div
+            className="rounded-lg p-5 text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed whitespace-pre-line"
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            {manga.description || 'No synopsis available for this series yet.'}
+          </div>
+        </div>
 
         {/* Chapter List */}
-        {manga.chapters && manga.chapters.length > 0 && (
+        {manga.chapters && manga.chapters.length > 0 ? (
           <ChapterList chapters={manga.chapters} mangaTitle={manga.title} />
-        )}
-
-        {/* Empty chapter state */}
-        {(!manga.chapters || manga.chapters.length === 0) && (
-          <motion.div
-            variants={fadeUp}
-            initial="initial"
-            animate="animate"
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="mt-8"
+        ) : (
+          <div
+            className="mt-8 rounded-lg p-8 text-center"
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+            }}
           >
-            <div className="glass-card p-6 text-center">
-              <BookOpen size={32} className="mx-auto mb-3 text-[var(--accent)]" />
-              <p className="text-[var(--text-secondary)]">
-                এখনো কোন চ্যাপ্টার যোগ করা হয়নি। শীঘ্রই চ্যাপ্টার আসছে!
-              </p>
-            </div>
-          </motion.div>
+            <BookOpen size={28} className="mx-auto mb-2.5 text-[var(--text-muted)]" />
+            <p className="text-sm text-[var(--text-secondary)]">
+              No chapters have been added yet. Check back or subscribe to Telegram alerts for release updates.
+            </p>
+          </div>
         )}
       </div>
     </div>

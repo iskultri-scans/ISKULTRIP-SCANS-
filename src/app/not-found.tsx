@@ -16,41 +16,28 @@ export default function NotFound() {
 
   return (
     <PublicLayout genres={genreSlugs}>
-      <div className="max-w-2xl mx-auto px-4 py-24 text-center">
-        {/* ASCII Art */}
-        <pre className="text-[var(--accent)] text-xs sm:text-sm mb-8 font-mono leading-tight select-none">
-{`
- ██╗  ██╗ ██████╗ ██╗  ██╗
- ██║  ██║██╔═══██╗╚██╗██╔╝
- ███████║██║   ██║ ╚███╔╝ 
- ██╔══██║██║   ██║ ██╔██╗ 
- ██║  ██║╚██████╔╝██╔╝ ██╗
- ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝
-`}
-        </pre>
+      <div className="max-w-xl mx-auto px-4 sm:px-6 py-24 text-center">
+        <p className="font-mono-num text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent)] mb-3">
+          Error 404
+        </p>
 
-        <h1 className="font-['Bebas_Neue'] text-6xl sm:text-8xl tracking-wider text-[var(--text-primary)] mb-4">
-          404
+        <h1 className="font-display text-5xl sm:text-7xl font-bold tracking-tight text-[var(--text-primary)] mb-4">
+          Page Not Found
         </h1>
 
-        <p className="text-xl text-[var(--text-secondary)] mb-2">
-          Page Not Found
+        <p className="text-sm sm:text-base text-[var(--text-secondary)] mb-8 leading-relaxed">
+          The page or series record you are looking for is not in this edition of the catalog.
         </p>
 
-        <p className="text-sm text-[var(--text-muted)] mb-8 max-w-md mx-auto">
-          Looks like this page got lost in the manga universe. Maybe it was isekai&apos;d to another world?
-        </p>
-
-        <div className="flex items-center justify-center gap-4">
-          <Link href="/" className="btn-accent flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link href="/" className="btn-accent inline-flex items-center gap-2 text-sm">
             <Home size={16} /> Back Home
           </Link>
           <Link
             href="/search"
-            className="px-6 py-3 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-all"
-            style={{ border: '1px solid var(--border-color)' }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-colors"
           >
-            <Search size={16} className="inline mr-2" />
+            <Search size={16} />
             Search Manga
           </Link>
         </div>

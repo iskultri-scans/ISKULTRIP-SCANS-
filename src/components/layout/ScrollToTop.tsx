@@ -8,30 +8,27 @@ export function ScrollToTop() {
 
   useEffect(() => {
     const onScroll = () => {
-      setVisible(window.scrollY > 300);
+      setVisible(window.scrollY > 360);
     };
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   if (!visible) return null;
 
   return (
     <button
-      onClick={scrollToTop}
-      className="fixed bottom-6 left-6 z-50 p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+      type="button"
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 w-11 h-11 flex items-center justify-center rounded-lg shadow-lg transition-colors cursor-pointer"
       style={{
-        background: 'var(--accent)',
-        color: '#0a0a0f',
-        boxShadow: '0 0 20px var(--accent-glow-strong)',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)',
+        border: '1px solid var(--border-strong)',
       }}
       aria-label="Scroll to top"
     >
-      <ArrowUp size={20} />
+      <ArrowUp size={18} />
     </button>
   );
 }

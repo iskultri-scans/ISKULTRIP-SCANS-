@@ -1,13 +1,6 @@
 'use client';
 
-/**
- * AdultBadge — 18+ badge for adult content
- *
- * MangaCard, MangaDetail এবং ChapterList-এ ব্যবহার করা যাবে।
- */
-
 import React from 'react';
-import { motion } from 'framer-motion';
 import { ShieldAlert } from 'lucide-react';
 
 interface AdultBadgeProps {
@@ -18,44 +11,38 @@ interface AdultBadgeProps {
 
 export function AdultBadge({ size = 'sm', variant = 'badge', showIcon = true }: AdultBadgeProps) {
   const sizeClasses = {
-    sm: 'text-[9px] px-1.5 py-0.5 gap-0.5',
-    md: 'text-[11px] px-2 py-1 gap-1',
-    lg: 'text-xs px-2.5 py-1.5 gap-1',
+    sm: 'text-[10px] px-1.5 py-0.5 gap-1',
+    md: 'text-xs px-2 py-0.5 gap-1',
+    lg: 'text-xs px-2.5 py-1 gap-1.5',
   };
 
-  const iconSize = {
-    sm: 9,
-    md: 12,
-    lg: 14,
-  };
+  const iconSize = { sm: 10, md: 12, lg: 14 };
 
   if (variant === 'banner') {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold"
+      <span
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold"
         style={{
-          background: 'rgba(239, 68, 68, 0.15)',
-          border: '1px solid rgba(239, 68, 68, 0.4)',
-          color: '#ef4444',
+          background: 'var(--accent-glow)',
+          border: '1px solid var(--accent)',
+          color: 'var(--accent)',
         }}
       >
-        {showIcon && <ShieldAlert size={14} />}
-        <span>১৮+ Adult Content</span>
-      </motion.div>
+        {showIcon && <ShieldAlert size={13} />}
+        <span>18+ Mature</span>
+      </span>
     );
   }
 
   return (
     <span
-      className={`inline-flex items-center font-bold rounded-md ${sizeClasses[size]}`}
+      className={`inline-flex items-center font-semibold rounded-md ${sizeClasses[size]}`}
       style={{
-        background: 'rgba(239, 68, 68, 0.15)',
-        border: '1px solid rgba(239, 68, 68, 0.4)',
-        color: '#ef4444',
+        background: 'var(--accent-glow)',
+        border: '1px solid var(--accent)',
+        color: 'var(--accent)',
       }}
-      title="১৮+ Adult Content"
+      title="18+ Adult Content"
     >
       {showIcon && <ShieldAlert size={iconSize[size]} />}
       <span>18+</span>

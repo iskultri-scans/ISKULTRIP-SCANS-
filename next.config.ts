@@ -1,6 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ✅ Enable standalone output for AI Studio / containerized deployment
+  output: 'standalone',
+
+  // ✅ Allow AI Studio / Cloud Run preview hosts to access Next.js dev resources
+  allowedDevOrigins: [
+    '*.asia-southeast1.run.app',
+    '*.run.app',
+    'localhost',
+    '127.0.0.1',
+  ],
+
   // ✅ Enable React strict mode — catches bugs in development
   reactStrictMode: true,
 
@@ -23,29 +34,25 @@ const nextConfig: NextConfig = {
 
   // Security + PWA headers
   async headers() {
+    const isDev = process.env.NODE_ENV !== 'production';
     return [
       {
         source: '/(.*)',
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           {
-            // 🔒 Tighter CSP — removed 'unsafe-eval' (was an XSS risk).
-            // 'unsafe-inline' kept for now because of inline styles used throughout;
-            // migrate to nonce-based CSP in a future refactor.
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://apis.google.com https://www.googletagmanager.com",
+              `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://apis.google.com https://www.googletagmanager.com`,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://firestore.googleapis.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.jikan.moe",
-              "frame-src https://www.facebook.com https://web.facebook.com https://telegram.org https://t.me",
-              "frame-ancestors 'self' https://www.facebook.com https://web.facebook.com https://telegram.org https://t.me",
+              "connect-src 'self' https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.jikan.moe https://*.firebaseapp.com https://*.firebaseio.com wss://*.firebaseio.com",
+              "frame-src https://www.facebook.com https://web.facebook.com https://telegram.org https://t.me https://*.firebaseapp.com https://accounts.google.com",
             ].join('; '),
           },
         ],

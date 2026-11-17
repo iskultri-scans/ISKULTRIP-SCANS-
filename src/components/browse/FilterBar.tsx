@@ -1,11 +1,10 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { SearchInput } from './SearchInput';
 import { CustomDropdown, type DropdownOption } from '@/components/ui/CustomDropdown';
 import { cn } from '@/lib/utils';
-import { Clock, CheckCircle, Pause, Zap, Globe, BookOpen } from 'lucide-react';
+import { Clock, CheckCircle, Pause, Zap, BookOpen } from 'lucide-react';
 
 interface FilterBarProps {
   search: string;
@@ -22,16 +21,16 @@ interface FilterBarProps {
 }
 
 const languageTabs = [
-  { value: 'all', label: 'All' },
+  { value: 'all', label: 'All Editions' },
   { value: 'en', label: 'EN' },
   { value: 'bn', label: 'BN' },
 ];
 
 const statusOptions: DropdownOption[] = [
   { value: '', label: 'All Status', icon: <Zap size={14} /> },
-  { value: 'ongoing', label: 'Ongoing', icon: <Clock size={14} className="text-emerald-400" />, color: 'emerald' },
-  { value: 'completed', label: 'Completed', icon: <CheckCircle size={14} className="text-blue-400" />, color: 'blue' },
-  { value: 'hiatus', label: 'Hiatus', icon: <Pause size={14} className="text-amber-400" />, color: 'amber' },
+  { value: 'ongoing', label: 'Ongoing', icon: <Clock size={14} className="text-emerald-500" /> },
+  { value: 'completed', label: 'Completed', icon: <CheckCircle size={14} className="text-blue-500" /> },
+  { value: 'hiatus', label: 'Hiatus', icon: <Pause size={14} className="text-amber-500" /> },
 ];
 
 export function FilterBar({
@@ -63,48 +62,34 @@ export function FilterBar({
 
   return (
     <div className="space-y-4 mb-6">
-      {/* Search */}
       <SearchInput value={search} onChange={onSearchChange} />
 
-      {/* Filter Row */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Language Tabs */}
+        {/* Language Segmented Tabs */}
         <div
-          className="flex rounded-xl overflow-hidden"
+          className="inline-flex p-1 rounded-lg"
           style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}
         >
-          {languageTabs.map((tab) => (
-            <motion.button
-              key={tab.value}
-              onClick={() => onLanguageChange(tab.value)}
-              whileTap={{ scale: 0.95 }}
-              className={cn(
-                'px-4 py-2 text-sm font-medium transition-all duration-200 relative',
-                language === tab.value
-                  ? 'text-[#0a0a0f]'
-                  : 'text-[var(--text-muted)] hover:text-[var(--accent)]'
-              )}
-              style={{
-                background: language === tab.value ? 'var(--accent)' : 'transparent',
-              }}
-            >
-              {language === tab.value && (
-                <motion.div
-                  layoutId="language-indicator"
-                  className="absolute inset-0 rounded-lg"
-                  style={{ background: 'var(--accent)' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                />
-              )}
-              <span className="relative z-10 flex items-center gap-1.5">
-                <Globe size={12} />
+          {languageTabs.map((tab) => {
+            const active = language === tab.value;
+            return (
+              <button
+                type="button"
+                key={tab.value}
+                onClick={() => onLanguageChange(tab.value)}
+                className={cn(
+                  'px-3.5 py-1.5 rounded-md text-xs font-semibold transition-colors',
+                  active
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                )}
+              >
                 {tab.label}
-              </span>
-            </motion.button>
-          ))}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Status Dropdown */}
         <CustomDropdown
           options={statusOptions}
           value={status}
@@ -114,7 +99,6 @@ export function FilterBar({
           className="w-36"
         />
 
-        {/* Genre Dropdown */}
         <CustomDropdown
           options={genreOptions}
           value={genre}
@@ -124,8 +108,7 @@ export function FilterBar({
           className="w-40"
         />
 
-        {/* Sort */}
-        <div className="ml-auto">
+        <div className="sm:ml-auto">
           <CustomDropdown
             options={sortOptions}
             value={sort}

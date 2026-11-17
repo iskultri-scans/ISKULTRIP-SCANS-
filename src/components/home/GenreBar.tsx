@@ -11,16 +11,21 @@ export function GenreBar({ genres }: GenreBarProps) {
   if (genres.length === 0) return null;
 
   return (
-    <section className="py-4 sm:py-8">
-      <h2 className="font-['Bebas_Neue'] text-xl sm:text-2xl tracking-wide text-[var(--text-primary)] mb-3 sm:mb-4">
-        Browse by Genre
-      </h2>
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+    <section className="py-8 sm:py-10 border-t" style={{ borderColor: 'var(--border-color)' }}>
+      <div className="mb-4 sm:mb-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--accent)] mb-1">
+          Index
+        </p>
+        <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-[var(--text-primary)]">
+          Browse by Genre
+        </h2>
+      </div>
+      <div className="flex flex-wrap gap-2">
         {genres.map((genre) => (
           <Link
             key={genre.slug}
             href={`/genre/${genre.slug}`}
-            className="genre-chip flex-shrink-0"
+            className="genre-chip"
           >
             {genre.name}
           </Link>

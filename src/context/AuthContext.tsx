@@ -12,6 +12,7 @@ import {
   type User,
 } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
+import { SITE_CONFIG } from '@/lib/config';
 
 interface AuthContextType {
   user: User | null;
@@ -41,9 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getFirebaseAuth(), (firebaseUser) => {
       setUser(firebaseUser);
-      if (firebaseUser) {
-        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'bongmanga.official@gmail.com';
-        setIsAdmin(firebaseUser.email === adminEmail);
+      if (firebaseUser?.email) {
+        setIsAdmin(SITE_CONFIG.adminEmails.includes(firebaseUser.email));
       } else {
         setIsAdmin(false);
       }

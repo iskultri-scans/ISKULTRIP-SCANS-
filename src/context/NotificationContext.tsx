@@ -7,6 +7,7 @@ interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
   loading: boolean;
+  isRead: (id: string) => boolean;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   refreshNotifications: () => void;
@@ -16,6 +17,7 @@ const NotificationContext = createContext<NotificationContextType>({
   notifications: [],
   unreadCount: 0,
   loading: false,
+  isRead: () => false,
   markAsRead: () => {},
   markAllAsRead: () => {},
   refreshNotifications: () => {},
@@ -63,12 +65,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, []);
 
   useEffect(() => {
-    // Load read IDs from localStorage
     setReadIds(getReadIds());
     fetchNotifications();
   }, [fetchNotifications]);
 
   const unreadCount = notifications.filter((n) => !readIds.has(n.id)).length;
+
+  const isRead = useCallback((id: string) => readIds.has(id), [readIds]);
 
   const markAsRead = useCallback((id: string) => {
     setReadIds((prev) => {
@@ -94,6 +97,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         notifications,
         unreadCount,
         loading,
+        isRead,
         markAsRead,
         markAllAsRead,
         refreshNotifications: fetchNotifications,

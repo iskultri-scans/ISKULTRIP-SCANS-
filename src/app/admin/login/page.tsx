@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
+import { SITE_CONFIG } from '@/lib/config';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useToast } from '@/components/ui/Toast';
 import { Shield, Lock, Mail, AlertCircle } from 'lucide-react';
 
-const LOCK_DURATION = 15 * 60 * 1000; // 15 minutes
+const LOCK_DURATION = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
 export default function AdminLoginPage() {
@@ -48,25 +49,26 @@ export default function AdminLoginPage() {
 
     setLoading(true);
     try {
-      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'mdhasan@example.com';
-      if (email !== adminEmail) {
+      if (!SITE_CONFIG.adminEmails.includes(email)) {
         throw new Error('Unauthorized email');
       }
 
       const cred = await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
 
-      // Set session cookie
       const idToken = await cred.user.getIdToken();
-      await fetch('/api/admin/session', {
+      const res = await fetch('/api/admin/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
       });
+      if (!res.ok) {
+        throw new Error('Unauthorized');
+      }
 
       setFailedAttempts(0);
       showToast('Signed in successfully!', 'success');
       router.push('/admin');
-    } catch (error: unknown) {
+    } catch {
       const newAttempts = failedAttempts + 1;
       setFailedAttempts(newAttempts);
 
@@ -81,36 +83,60 @@ export default function AdminLoginPage() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    if (lockedUntil && Date.now() < lockedUntil) return;
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const cred = await signInWithPopup(getFirebaseAuth(), provider);
+      if (!cred.user.email || !SITE_CONFIG.adminEmails.includes(cred.user.email)) {
+        throw new Error('Unauthorized email');
+      }
+      const idToken = await cred.user.getIdToken();
+      const res = await fetch('/api/admin/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!res.ok) {
+        throw new Error('Unauthorized');
+      }
+      showToast('Signed in with Google!', 'success');
+      router.push('/admin');
+    } catch {
+      showToast('Admin Google sign-in failed or unauthorized email.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const isLocked = lockedUntil !== null && Date.now() < lockedUntil;
+  const inputClass =
+    'w-full px-3.5 py-2.5 rounded-lg text-sm outline-none border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:border-[var(--accent)] transition-colors';
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--bg-primary)]">
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
 
-      <div
-        className="w-full max-w-md rounded-2xl p-8"
-        style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-color)',
-          boxShadow: '0 0 40px var(--accent-glow)',
-        }}
-      >
+      <div className="w-full max-w-md rounded-xl p-7 sm:p-8 border border-[var(--border-color)] bg-[var(--bg-secondary)]">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4" style={{ background: 'var(--accent-glow)' }}>
-            <Shield size={28} className="text-[var(--accent)]" />
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4 border border-[var(--border-color)] bg-[var(--accent-glow)]">
+            <Shield size={22} className="text-[var(--accent)]" />
           </div>
-          <h1 className="font-['Bebas_Neue'] text-3xl tracking-widest" style={{ color: 'var(--accent)' }}>
-            ISKULTRIP SCANS
+          <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+            Manga<span className="text-[var(--accent)]">BD</span>
           </h1>
-          <p className="text-sm text-[var(--text-muted)] mt-1">Admin Access</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)] mt-1">
+            Editorial Admin Access
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-              <Mail size={14} /> Email
+            <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
+              <Mail size={13} /> Email
             </label>
             <input
               type="email"
@@ -118,19 +144,14 @@ export default function AdminLoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLocked}
-              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]"
-              style={{
-                background: 'var(--bg-primary)',
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-primary)',
-              }}
-              placeholder="admin@iskultrip.com"
+              className={inputClass}
+              placeholder="admin@mangabd.app"
             />
           </div>
 
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-              <Lock size={14} /> Password
+            <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
+              <Lock size={13} /> Password
             </label>
             <input
               type="password"
@@ -138,20 +159,15 @@ export default function AdminLoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLocked}
-              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]"
-              style={{
-                background: 'var(--bg-primary)',
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-primary)',
-              }}
+              className={inputClass}
               placeholder="Enter password"
             />
           </div>
 
           {isLocked && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
-              <AlertCircle size={16} className="text-red-400" />
-              <span className="text-sm text-red-400">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              <AlertCircle size={16} className="text-red-500" />
+              <span className="font-mono-num text-sm text-red-500">
                 Locked. Try again in {countdown}
               </span>
             </div>
@@ -160,16 +176,25 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading || isLocked}
-            className="btn-accent w-full py-3 text-sm flex items-center justify-center gap-2"
+            className="btn-accent w-full py-2.5 text-sm flex items-center justify-center gap-2"
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-[#0a0a0f] border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <Lock size={16} />
+                <Lock size={15} />
                 Sign In
               </>
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={loading || isLocked}
+            className="w-full py-2.5 rounded-lg text-sm font-medium border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-colors flex items-center justify-center gap-2"
+          >
+            Sign in with Google
           </button>
         </form>
       </div>

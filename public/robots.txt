@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://iskultrip.com/sitemap.xml
+Sitemap: https://mangabd.vercel.app/sitemap.xml

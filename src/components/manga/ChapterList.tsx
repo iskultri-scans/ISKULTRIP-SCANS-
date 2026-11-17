@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, ExternalLink, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { BookOpen, ExternalLink, ChevronUp, Search, Layers } from 'lucide-react';
 import type { Chapter } from '@/lib/firestore';
+import { MangaReaderModal } from './MangaReaderModal';
 
 interface ChapterListProps {
   chapters: Chapter[];
@@ -13,153 +13,169 @@ interface ChapterListProps {
 export function ChapterList({ chapters, mangaTitle }: ChapterListProps) {
   const [expanded, setExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortAsc, setSortAsc] = useState(false); // default desc (newest first)
+  const [sortAsc, setSortAsc] = useState(false);
+  const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
 
-  const filteredChapters = chapters.filter((ch) =>
-    ch.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ch.chapterNumber.toString().includes(searchQuery)
+  const filteredChapters = chapters.filter(
+    (ch) =>
+      ch.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ch.chapterNumber.toString().includes(searchQuery)
   );
 
   const sortedChapters = sortAsc
     ? [...filteredChapters].sort((a, b) => a.chapterNumber - b.chapterNumber)
     : filteredChapters;
 
-  const handleChapterClick = (readLink: string) => {
-    window.open(readLink, '_blank', 'noopener,noreferrer');
+  // Ordered ascending by chapterNumber for prev/next navigation inside reader
+  const ascHostedChapters = [...chapters]
+    .filter((ch) => ch.pages && ch.pages.length > 0)
+    .sort((a, b) => a.chapterNumber - b.chapterNumber);
+
+  const activeIdx = activeChapter
+    ? ascHostedChapters.findIndex((c) => c.id === activeChapter.id)
+    : -1;
+  const prevChapter = activeIdx > 0 ? ascHostedChapters[activeIdx - 1] : null;
+  const nextChapter =
+    activeIdx >= 0 && activeIdx < ascHostedChapters.length - 1
+      ? ascHostedChapters[activeIdx + 1]
+      : null;
+
+  const handleChapterClick = (chapter: Chapter) => {
+    if (chapter.pages && chapter.pages.length > 0) {
+      setActiveChapter(chapter);
+    } else if (chapter.readLink) {
+      window.open(chapter.readLink, '_blank', 'noopener,noreferrer');
+    }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.2 }}
-      className="mt-8"
-    >
-      {/* Header */}
-      <div
-        className="rounded-t-2xl p-4 flex items-center justify-between cursor-pointer"
+    <div className="mt-8">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full rounded-t-lg px-4 py-3.5 flex items-center justify-between text-left transition-colors cursor-pointer"
         style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-color)',
           borderBottom: expanded ? 'none' : '1px solid var(--border-color)',
+          borderRadius: expanded ? '8px 8px 0 0' : '8px',
         }}
-        onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex items-center gap-3">
-          <BookOpen size={22} className="text-[var(--accent)]" />
-          <h2 className="font-['Bebas_Neue'] text-xl tracking-wide text-[var(--text-primary)]">
-            Chapters ({chapters.length})
+        <div className="flex items-center gap-2.5">
+          <BookOpen size={18} className="text-[var(--accent)]" />
+          <h2 className="font-display text-lg font-bold tracking-tight text-[var(--text-primary)]">
+            Chapters <span className="font-mono-num text-sm font-medium text-[var(--text-muted)] ml-1">({chapters.length})</span>
           </h2>
         </div>
-        <motion.div
-          animate={{ rotate: expanded ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <ChevronUp size={20} className="text-[var(--text-muted)]" />
-        </motion.div>
-      </div>
+        <ChevronUp
+          size={18}
+          className={`text-[var(--text-muted)] transition-transform duration-200 ${expanded ? '' : 'rotate-180'}`}
+        />
+      </button>
 
-      {/* Expandable Content */}
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="overflow-hidden"
+      {expanded && (
+        <div
+          className="rounded-b-lg overflow-hidden"
+          style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+          }}
+        >
+          <div
+            className="p-3 border-b flex items-center gap-2.5"
+            style={{ borderColor: 'var(--border-color)' }}
           >
-            <div
-              className="rounded-b-2xl overflow-hidden"
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Filter chapters..."
+                className="w-full pl-8 pr-3 py-2 rounded-lg text-xs outline-none focus:border-[var(--accent)]"
+                style={{
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setSortAsc(!sortAsc)}
+              className="px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer"
               style={{
-                background: 'var(--bg-secondary)',
+                background: 'var(--bg-primary)',
                 border: '1px solid var(--border-color)',
-                borderTop: 'none',
+                color: sortAsc ? 'var(--accent)' : 'var(--text-secondary)',
               }}
             >
-              {/* Search & Sort Bar */}
-              <div className="p-3 border-b flex items-center gap-3" style={{ borderColor: 'var(--border-color)' }}>
-                <div className="relative flex-1">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search chapters..."
-                    className="w-full pl-8 pr-3 py-2 rounded-lg text-xs outline-none"
-                    style={{
-                      background: 'var(--bg-primary)',
-                      border: '1px solid var(--border-color)',
-                      color: 'var(--text-primary)',
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setSortAsc(!sortAsc); }}
-                  className="px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all"
-                  style={{
-                    background: 'var(--bg-primary)',
-                    border: '1px solid var(--border-color)',
-                    color: sortAsc ? 'var(--accent)' : 'var(--text-muted)',
-                  }}
-                >
-                  {sortAsc ? 'Oldest ↑' : 'Newest ↓'}
-                </button>
-              </div>
+              {sortAsc ? 'Oldest First' : 'Newest First'}
+            </button>
+          </div>
 
-              {/* Chapter Items */}
-              <div className="max-h-[500px] overflow-y-auto no-scrollbar">
-                {sortedChapters.length === 0 ? (
-                  <div className="text-center py-10 text-[var(--text-muted)] text-sm">
-                    {chapters.length === 0
-                      ? 'No chapters available yet.'
-                      : 'No matching chapters found.'}
-                  </div>
-                ) : (
-                  sortedChapters.map((chapter, index) => (
-                    <motion.button
-                      key={chapter.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.03, duration: 0.3 }}
-                      onClick={() => handleChapterClick(chapter.readLink)}
-                      className="w-full flex items-center justify-between px-4 py-3.5 text-left transition-all hover:bg-[var(--accent-glow)] group"
-                      style={{
-                        borderBottom: '1px solid var(--border-color)',
-                      }}
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span
-                          className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold"
-                          style={{
-                            background: 'var(--accent-glow)',
-                            color: 'var(--accent)',
-                          }}
-                        >
-                          {chapter.chapterNumber}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-[var(--text-primary)] truncate group-hover:text-[var(--accent)] transition-colors">
-                            {chapter.title || `Chapter ${chapter.chapterNumber}`}
-                          </p>
-                          <p className="text-xs text-[var(--text-muted)]">
-                            {mangaTitle}
-                          </p>
-                        </div>
+          <div className="max-h-[480px] overflow-y-auto divide-y" style={{ borderColor: 'var(--border-color)' }}>
+            {sortedChapters.length === 0 ? (
+              <div className="text-center py-10 text-[var(--text-muted)] text-sm">
+                {chapters.length === 0 ? 'No chapters available yet.' : 'No matching chapters found.'}
+              </div>
+            ) : (
+              sortedChapters.map((chapter) => {
+                const hostedCount = chapter.pages?.length || 0;
+                return (
+                  <button
+                    type="button"
+                    key={chapter.id}
+                    onClick={() => handleChapterClick(chapter)}
+                    className="w-full flex items-center justify-between px-4 py-3 min-h-[52px] text-left transition-colors hover:bg-[var(--bg-subtle)] group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span
+                        className="shrink-0 min-w-[40px] h-8 px-2 rounded-md flex items-center justify-center font-mono-num text-xs font-semibold"
+                        style={{
+                          background: 'var(--accent-glow)',
+                          color: 'var(--accent)',
+                        }}
+                      >
+                        {chapter.chapterNumber}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-[var(--text-primary)] truncate group-hover:text-[var(--accent)] transition-colors">
+                          {chapter.title || `Chapter ${chapter.chapterNumber}`}
+                        </p>
+                        <p className="text-xs text-[var(--text-muted)] truncate">
+                          {hostedCount > 0 ? `${hostedCount} pages · Built-in Reader` : mangaTitle}
+                        </p>
                       </div>
+                    </div>
+                    {hostedCount > 0 ? (
+                      <Layers
+                        size={15}
+                        className="shrink-0 text-[var(--accent)] ml-3"
+                        aria-label="Open built-in reader"
+                      />
+                    ) : (
                       <ExternalLink
                         size={14}
-                        className="flex-shrink-0 text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-all sm:opacity-0 sm:group-hover:opacity-100"
+                        className="shrink-0 text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors ml-3"
                       />
-                    </motion.button>
-                  ))
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      <MangaReaderModal
+        chapter={activeChapter}
+        mangaTitle={mangaTitle}
+        onClose={() => setActiveChapter(null)}
+        onSelectChapter={(ch) => setActiveChapter(ch)}
+        prevChapter={prevChapter}
+        nextChapter={nextChapter}
+      />
+    </div>
   );
 }

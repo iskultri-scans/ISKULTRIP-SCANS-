@@ -12,6 +12,7 @@ export function formatDate(timestamp: { seconds: number; nanoseconds: number } |
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: 'UTC',
   });
 }
 

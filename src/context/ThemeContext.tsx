@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useSyncExternalStore } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 
 type Theme = 'dark' | 'light';
 
@@ -14,19 +14,39 @@ const ThemeContext = createContext<ThemeContextType>({
   toggleTheme: () => {},
 });
 
-function getStoredTheme(): Theme {
-  if (typeof window === 'undefined') return 'dark';
-  return (localStorage.getItem('iskultrip-theme') as Theme) || 'dark';
-}
+const THEME_STORAGE_KEY = 'iskultrip-theme';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(getStoredTheme);
+  // Always start with 'dark' to match SSR HTML and prevent hydration mismatches
+  const [theme, setTheme] = useState<Theme>('dark');
+  const hydratedRef = useRef(false);
 
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+      if (stored === 'light' || stored === 'dark') {
+        setTheme(stored);
+        const root = document.documentElement;
+        root.classList.remove('light', 'dark');
+        root.classList.add(stored);
+      }
+    } catch {
+      // ignore storage access issues
+    } finally {
+      hydratedRef.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
     const root = document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
-    localStorage.setItem('iskultrip-theme', theme);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // ignore storage access issues
+    }
   }, [theme]);
 
   const toggleTheme = useCallback(() => {

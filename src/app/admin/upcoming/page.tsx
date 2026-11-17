@@ -97,30 +97,25 @@ export default function AdminUpcomingPage() {
     }
   };
 
-  const inputClass = 'w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all';
-  const inputStyle = {
-    background: 'var(--bg-primary)',
-    border: '1px solid var(--border-color)',
-    color: 'var(--text-primary)',
-  };
+  const inputClass =
+    'w-full px-3.5 py-2.5 rounded-lg text-sm outline-none border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:border-[var(--accent)] transition-colors';
 
   return (
     <div>
       <AdminHeader
         title="Upcoming Releases"
-        subtitle="আসন্ন রিলিজ পরিচালনা করুন"
+        subtitle="Schedule and manage upcoming chapter and series releases"
         actions={
           <button
             onClick={() => { resetForm(); setShowForm(!showForm); }}
-            className="btn-accent flex items-center gap-2 text-sm"
+            className="btn-accent inline-flex items-center gap-2 text-sm"
           >
-            {showForm ? <X size={16} /> : <Plus size={16} />}
+            {showForm ? <X size={15} /> : <Plus size={15} />}
             {showForm ? 'Cancel' : 'Add Release'}
           </button>
         }
       />
 
-      {/* Form */}
       <AnimatePresence>
         {showForm && (
           <motion.div
@@ -131,59 +126,51 @@ export default function AdminUpcomingPage() {
           >
             <form
               onSubmit={handleSubmit}
-              className="rounded-xl p-4 sm:p-6 space-y-4"
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-              }}
+              className="rounded-xl p-5 sm:p-6 space-y-4 border border-[var(--border-color)] bg-[var(--bg-secondary)]"
             >
-              <h3 className="font-['Bebas_Neue'] text-lg tracking-wide text-[var(--text-primary)]">
+              <h3 className="font-display text-lg font-bold tracking-tight text-[var(--text-primary)]">
                 New Upcoming Release
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">Title (EN) *</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Title (EN) *</label>
                   <input
                     value={form.title}
                     onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
                     required
                     className={inputClass}
-                    style={inputStyle}
                     placeholder="e.g. Solo Leveling Chapter 200"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">Title (BN)</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Alternate Title (Optional)</label>
                   <input
                     value={form.titleBn}
                     onChange={(e) => setForm((p) => ({ ...p, titleBn: e.target.value }))}
                     className={inputClass}
-                    style={inputStyle}
-                    placeholder="e.g. সোলো লেভেলিং অধ্যায় ২০০"
+                    placeholder="Optional alternate title"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">Release Date & Time *</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Release Date &amp; Time *</label>
                   <input
                     type="datetime-local"
                     value={form.releaseDate}
                     onChange={(e) => setForm((p) => ({ ...p, releaseDate: e.target.value }))}
                     required
                     className={inputClass}
-                    style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">Cover Image URL</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Cover Image URL</label>
                   <input
                     value={form.coverImage}
                     onChange={(e) => setForm((p) => ({ ...p, coverImage: e.target.value }))}
                     className={inputClass}
-                    style={inputStyle}
                     placeholder="https://..."
                   />
                 </div>
@@ -191,54 +178,48 @@ export default function AdminUpcomingPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">Manga Slug (for link)</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Manga Slug (for link)</label>
                   <input
                     value={form.mangaSlug}
                     onChange={(e) => setForm((p) => ({ ...p, mangaSlug: e.target.value }))}
                     className={inputClass}
-                    style={inputStyle}
                     placeholder="e.g. solo-leveling"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">Manga ID (optional)</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Manga ID (optional)</label>
                   <input
                     value={form.mangaId}
                     onChange={(e) => setForm((p) => ({ ...p, mangaId: e.target.value }))}
                     className={inputClass}
-                    style={inputStyle}
                     placeholder="Firestore document ID"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-[var(--text-muted)] mb-1 block">Description</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Description</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                   rows={3}
                   className={inputClass}
-                  style={inputStyle}
                   placeholder="Brief description of this release..."
                 />
               </div>
 
               <div className="flex gap-2">
-                <motion.button
+                <button
                   type="submit"
                   disabled={submitting}
-                  whileHover={{ scale: submitting ? 1 : 1.02 }}
-                  whileTap={{ scale: submitting ? 1 : 0.98 }}
                   className="btn-accent text-xs py-2.5 px-5"
                 >
                   {submitting ? 'Adding...' : 'Add Release'}
-                </motion.button>
+                </button>
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-4 py-2.5 rounded-lg text-xs text-[var(--text-secondary)] hover:bg-[var(--accent-glow)] transition-colors"
-                  style={{ border: '1px solid var(--border-color)' }}
+                  className="px-4 py-2.5 rounded-lg text-xs border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   Cancel
                 </button>
@@ -256,58 +237,53 @@ export default function AdminUpcomingPage() {
           ))}
         </div>
       ) : releases.length === 0 ? (
-        <div className="text-center py-12">
-          <Calendar size={40} className="mx-auto text-[var(--text-muted)] mb-3" />
+        <div className="text-center py-12 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)]">
+          <Calendar size={36} className="mx-auto text-[var(--text-muted)] mb-3" />
           <p className="text-[var(--text-muted)] text-sm">No upcoming releases. Add one above!</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {releases.map((release, index) => {
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] divide-y divide-[var(--border-color)]">
+          {releases.map((release) => {
             const isPast = release.releaseDate.toMillis() < Date.now();
             return (
-              <motion.div
+              <div
                 key={release.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.03 }}
-                className="flex items-center justify-between p-3 rounded-lg transition-all group"
-                style={{
-                  border: '1px solid var(--border-color)',
-                  background: isPast ? 'rgba(239, 68, 68, 0.05)' : 'transparent',
-                }}
+                className={`flex items-center justify-between px-4 py-3.5 transition-colors group ${
+                  isPast ? 'bg-red-500/5' : 'hover:bg-[var(--bg-subtle)]'
+                }`}
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <span
-                    className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{
-                      background: isPast ? 'rgba(239, 68, 68, 0.1)' : 'var(--accent-glow)',
-                      color: isPast ? '#ef4444' : 'var(--accent)',
-                    }}
+                    className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isPast
+                        ? 'bg-red-500/10 text-red-500'
+                        : 'bg-[var(--accent-glow)] text-[var(--accent)]'
+                    }`}
                   >
-                    <Clock size={16} />
+                    <Clock size={15} />
                   </span>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-[var(--text-primary)] truncate">
-                      {release.titleBn || release.title}
+                      {release.title || release.titleBn}
                     </p>
-                    <p className="text-xs text-[var(--text-muted)]">
-                      {release.releaseDate.toDate().toLocaleString('bn-BD', {
+                    <p className="font-mono-num text-xs text-[var(--text-muted)]">
+                      {release.releaseDate.toDate().toLocaleString('en-US', {
                         dateStyle: 'medium',
                         timeStyle: 'short',
                       })}
-                      {isPast && ' — ⚠️ Past due'}
+                      {isPast && ' — Past due'}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
                   <button
                     onClick={() => setDeleteTarget(release)}
-                    className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 transition-all"
+                    className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-500 transition-colors"
                   >
                     <Trash2 size={14} />
                   </button>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>

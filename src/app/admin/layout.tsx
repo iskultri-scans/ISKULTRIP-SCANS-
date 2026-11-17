@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
@@ -15,19 +15,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isLoginPage = pathname === '/admin/login';
   const { user, isAdmin, loading: authLoading } = useAuth();
 
-  // Determine if we should show the admin panel
   const isAuthorized = !authLoading && user && isAdmin;
   const shouldRedirect = !authLoading && !isLoginPage && (!user || !isAdmin);
 
-  // Redirect non-admins away from admin routes
-  if (shouldRedirect) {
-    if (!user) {
-      // Not logged in → redirect to admin login
-      router.push('/admin/login');
-    } else {
-      // Logged in but not admin → redirect to home
-      router.push('/');
+  useEffect(() => {
+    if (shouldRedirect) {
+      if (!user) {
+        router.push('/admin/login');
+      } else {
+        router.push('/');
+      }
     }
+  }, [shouldRedirect, user, router]);
+
+  if (shouldRedirect) {
     return null;
   }
 
@@ -37,8 +38,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (authLoading || !isAuthorized) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-        <div className="skeleton w-12 h-12 rounded-full" />
+      <div className="flex items-center justify-center min-h-screen bg-[var(--bg-primary)]">
+        <div className="skeleton w-10 h-10 rounded-full" />
       </div>
     );
   }
@@ -55,16 +56,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <ToastProvider>
-      <div className="flex min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      <div className="flex min-h-screen bg-[var(--bg-primary)]">
         <AdminSidebar onSignOut={handleSignOut} />
-        <div className="flex-1 overflow-auto">
-          <div className="flex items-center justify-between p-3 sm:p-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
+        <div className="flex-1 min-w-0 overflow-auto">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-[var(--border-color)] bg-[var(--bg-secondary)]">
             <div className="text-xs sm:text-sm text-[var(--text-muted)] truncate">
-              Logged in as <strong className="text-[var(--text-primary)]">{user.email}</strong>
+              Signed in as <strong className="text-[var(--text-primary)] font-semibold">{user.email}</strong>
             </div>
             <ThemeToggle />
           </div>
-          <div className="p-3 sm:p-6 max-w-6xl pb-24 lg:pb-6 w-full">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-6xl pb-24 lg:pb-8 w-full">
             {children}
           </div>
         </div>

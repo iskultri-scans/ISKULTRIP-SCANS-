@@ -42,7 +42,7 @@ export default function BrowsePage() {
   }, []);
 
   const filteredManga = useMemo(() => {
-    // 🔒 Family Mode: filter out adult manga
+    // Family Mode: filter out adult manga
     let result = filterByMode(allManga);
 
     // Search
@@ -89,17 +89,25 @@ export default function BrowsePage() {
     return result;
   }, [allManga, debouncedSearch, language, status, genre, sort, filterByMode]);
 
-  const { currentItems, currentPage, totalPages, goToPage, nextPage, prevPage, hasNext, hasPrev } =
+  const { currentItems, currentPage, totalPages, goToPage, hasNext, hasPrev } =
     usePagination(filteredManga, 20);
 
   const genreSlugs = genres.map((g) => ({ name: g.name, slug: g.slug }));
 
   return (
     <PublicLayout genres={genreSlugs}>
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="font-['Bebas_Neue'] text-3xl tracking-wide text-[var(--text-primary)] mb-6">
-          Browse Manga
-        </h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <header className="pb-6 mb-6 border-b border-[var(--border-color)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--accent)] mb-1.5">
+            Complete Directory
+          </p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-[var(--text-primary)]">
+            Browse Catalog
+          </h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1.5">
+            Filter curated manga, manhwa, and webtoon editions by language, status, or genre.
+          </p>
+        </header>
 
         <FilterBar
           search={search}
@@ -115,8 +123,8 @@ export default function BrowsePage() {
           genres={genreSlugs}
         />
 
-        <p className="text-sm text-[var(--text-muted)] mb-4">
-          Showing {currentItems.length} of {filteredManga.length} manga
+        <p className="font-mono-num text-xs text-[var(--text-muted)] mb-5">
+          Showing {currentItems.length} of {filteredManga.length} series
         </p>
 
         <MangaGrid manga={currentItems} loading={loading} />

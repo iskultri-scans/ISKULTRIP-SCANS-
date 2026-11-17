@@ -3,21 +3,38 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { getAllGenres, addRequest, upvoteRequest, type Genre } from '@/lib/firestore';
+import {
+  getAllGenres,
+  addRequest,
+  upvoteRequest,
+  getAllRequests as fetchAllRequests,
+  type Genre,
+  type MangaRequest as MangaRequestType,
+} from '@/lib/firestore';
 import { ThumbsUp, MessageSquare, Send, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 
-// Temporary workaround - import from firestore directly
-import {
-  getAllRequests as fetchAllRequests,
-  type MangaRequest as MangaRequestType,
-} from '@/lib/firestore';
-
 const statusConfig = {
-  pending: { icon: Clock, label: 'Pending', emoji: '🟡', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
-  approved: { icon: CheckCircle, label: 'Approved', emoji: '🟢', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
-  completed: { icon: CheckCircle, label: 'Completed', emoji: '✅', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-  rejected: { icon: XCircle, label: 'Rejected', emoji: '🔴', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
+  pending: {
+    icon: Clock,
+    label: 'Pending',
+    badgeClass: 'text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/20',
+  },
+  approved: {
+    icon: CheckCircle,
+    label: 'Approved',
+    badgeClass: 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+  },
+  completed: {
+    icon: CheckCircle,
+    label: 'Completed',
+    badgeClass: 'text-sky-700 dark:text-sky-400 bg-sky-500/10 border-sky-500/20',
+  },
+  rejected: {
+    icon: XCircle,
+    label: 'Rejected',
+    badgeClass: 'text-red-700 dark:text-red-400 bg-red-500/10 border-red-500/20',
+  },
 };
 
 export default function RequestsPage() {
@@ -60,7 +77,6 @@ export default function RequestsPage() {
     if (!formTitle.trim() || !formDescription.trim()) return;
     setSubmitting(true);
     try {
-      // Generate a pseudo user ID from localStorage
       let userId = localStorage.getItem('iskultrip-user-id');
       if (!userId) {
         userId = 'user_' + Math.random().toString(36).substring(2, 10);
@@ -78,17 +94,16 @@ export default function RequestsPage() {
         createdAt: undefined as unknown as never,
         updatedAt: undefined as unknown as never,
       });
-      showToast('রিকোয়েস্ট জমা হয়েছে! Request submitted!', 'success');
+      showToast('Request submitted successfully!', 'success');
       setFormTitle('');
       setFormTitleBn('');
       setFormDescription('');
       setFormName('');
-      // Refresh
       const data = await fetchAllRequests();
       setRequests(data);
     } catch (error) {
       console.error('Error submitting request:', error);
-      showToast('রিকোয়েস্ট জমা দিতে সমস্যা হয়েছে', 'error');
+      showToast('Failed to submit request. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -102,7 +117,6 @@ export default function RequestsPage() {
     }
     try {
       await upvoteRequest(request.id, userId);
-      // Refresh
       const data = await fetchAllRequests();
       setRequests(data);
     } catch (error) {
@@ -111,137 +125,131 @@ export default function RequestsPage() {
   };
 
   const genreSlugs = genres.map((g) => ({ name: g.name, slug: g.slug }));
-  const inputClass = 'w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all focus:ring-2 focus:ring-[var(--accent)]';
-  const inputStyle = {
-    background: 'var(--bg-primary)',
-    border: '1px solid var(--border-color)',
-    color: 'var(--text-primary)',
-  };
+  const inputClass =
+    'w-full px-3.5 py-2.5 rounded-lg text-sm outline-none transition-colors border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:border-[var(--accent)]';
 
   return (
     <PublicLayout genres={genreSlugs}>
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+        <motion.header
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="pb-6 mb-8 border-b border-[var(--border-color)]"
         >
-          <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl tracking-wide text-[var(--text-primary)] mb-2">
-            মাঙ্গা রিকোয়েস্ট / Manga Requests
-          </h1>
-          <p className="text-[var(--text-secondary)]">
-            আপনি কোন মাঙ্গা বাংলায় পড়তে চান? রিকোয়েস্ট করুন! — Request manga you want to read in Bengali
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--accent)] mb-1.5">
+            Community Index
           </p>
-        </motion.div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-[var(--text-primary)]">
+            Manga Requests
+          </h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1.5">
+            Suggest a series to be added or updated on MangaBD and upvote community favorites.
+          </p>
+        </motion.header>
 
         {/* Request Form */}
         <motion.form
           onSubmit={handleSubmit}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="rounded-xl p-5 sm:p-6 mb-8"
-          style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-          }}
+          transition={{ delay: 0.05 }}
+          className="rounded-xl p-5 sm:p-6 mb-10 border border-[var(--border-color)] bg-[var(--bg-secondary)]"
         >
-          <h2 className="font-['Bebas_Neue'] text-xl tracking-wide text-[var(--text-primary)] mb-4 flex items-center gap-2">
-            <MessageSquare size={20} className="text-[var(--accent)]" />
-            নতুন রিকোয়েস্ট / New Request
+          <h2 className="font-display text-lg font-bold tracking-tight text-[var(--text-primary)] mb-4 flex items-center gap-2">
+            <MessageSquare size={18} className="text-[var(--accent)]" />
+            Submit New Request
           </h2>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-[var(--text-muted)] mb-1 block">Manga Title (EN) *</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">
+                  Manga Title (EN) *
+                </label>
                 <input
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   required
                   className={inputClass}
-                  style={inputStyle}
-                  placeholder="e.g. Demon Slayer"
+                  placeholder="e.g. Solo Leveling"
                 />
               </div>
               <div>
-                <label className="text-xs text-[var(--text-muted)] mb-1 block">মাঙ্গার নাম (BN)</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">
+                  Alternate / Local Title (Optional)
+                </label>
                 <input
                   value={formTitleBn}
                   onChange={(e) => setFormTitleBn(e.target.value)}
                   className={inputClass}
-                  style={inputStyle}
-                  placeholder="e.g. ডেমন স্লেয়ার"
+                  placeholder="Optional alternate title"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs text-[var(--text-muted)] mb-1 block">Description / বিবরণ *</label>
+              <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">
+                Details / Notes *
+              </label>
               <textarea
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
                 required
                 rows={3}
                 className={inputClass}
-                style={inputStyle}
-                placeholder="Why do you want this manga translated? কেন আপনি এই মাঙ্গাটি অনুবাদ করতে চান?"
+                placeholder="Share a link or note on why you want this series indexed..."
               />
             </div>
 
             <div>
-              <label className="text-xs text-[var(--text-muted)] mb-1 block">Your Name (optional)</label>
+              <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">
+                Your Name (Optional)
+              </label>
               <input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 className={inputClass}
-                style={inputStyle}
                 placeholder="Anonymous"
               />
             </div>
 
-            <motion.button
+            <button
               type="submit"
               disabled={submitting}
-              whileHover={{ scale: submitting ? 1 : 1.02 }}
-              whileTap={{ scale: submitting ? 1 : 0.98 }}
-              className="btn-accent flex items-center gap-2 text-sm"
+              className="btn-accent inline-flex items-center gap-2 text-sm"
             >
-              <Send size={16} />
-              {submitting ? 'Submitting...' : 'রিকোয়েস্ট জমা দিন / Submit Request'}
-            </motion.button>
+              <Send size={15} />
+              {submitting ? 'Submitting...' : 'Submit Request'}
+            </button>
           </div>
         </motion.form>
 
         {/* Sort Tabs */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-['Bebas_Neue'] text-2xl tracking-wide text-[var(--text-primary)]">
-            সকল রিকোয়েস্ট / All Requests ({requests.length})
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+          <h2 className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)]">
+            All Requests <span className="font-mono-num text-sm font-normal text-[var(--text-muted)]">({requests.length})</span>
           </h2>
           <div className="flex gap-2">
-            <button
-              onClick={() => setSortBy('upvotes')}
-              className="genre-chip text-xs"
-              style={{
-                borderColor: sortBy === 'upvotes' ? 'var(--accent)' : undefined,
-                background: sortBy === 'upvotes' ? 'var(--accent-glow)' : undefined,
-                color: sortBy === 'upvotes' ? 'var(--accent)' : undefined,
-              }}
-            >
-              Most Upvoted
-            </button>
-            <button
-              onClick={() => setSortBy('newest')}
-              className="genre-chip text-xs"
-              style={{
-                borderColor: sortBy === 'newest' ? 'var(--accent)' : undefined,
-                background: sortBy === 'newest' ? 'var(--accent-glow)' : undefined,
-                color: sortBy === 'newest' ? 'var(--accent)' : undefined,
-              }}
-            >
-              Newest
-            </button>
+            {[
+              { id: 'upvotes' as const, label: 'Most Upvoted' },
+              { id: 'newest' as const, label: 'Newest' },
+            ].map((tab) => {
+              const active = sortBy === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSortBy(tab.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    active
+                      ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                      : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -253,67 +261,72 @@ export default function RequestsPage() {
             ))}
           </div>
         ) : sortedRequests.length === 0 ? (
-          <div className="text-center py-12">
-            <MessageSquare size={48} className="mx-auto text-[var(--text-muted)] mb-4" />
-            <h3 className="font-['Bebas_Neue'] text-xl text-[var(--text-secondary)] mb-2">
-              কোনো রিকোয়েস্ট নেই
+          <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-center py-14 px-6">
+            <MessageSquare size={36} className="mx-auto text-[var(--text-muted)] mb-3" strokeWidth={1.6} />
+            <h3 className="font-display text-lg font-bold text-[var(--text-primary)] mb-1">
+              No Requests Yet
             </h3>
-            <p className="text-sm text-[var(--text-muted)]">No requests yet. Be the first to request a manga!</p>
+            <p className="text-sm text-[var(--text-muted)]">
+              Be the first reader to suggest a title above.
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
             {sortedRequests.map((request, index) => {
               const status = statusConfig[request.status] || statusConfig.pending;
+              const StatusIcon = status.icon;
               return (
                 <motion.div
                   key={request.id}
-                  initial={{ opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="rounded-xl p-4 sm:p-5"
-                  style={{
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border-color)',
-                  }}
+                  transition={{ delay: index * 0.03 }}
+                  className="rounded-xl p-4 sm:p-5 border border-[var(--border-color)] bg-[var(--bg-secondary)]"
                 >
                   <div className="flex items-start gap-4">
-                    {/* Upvote */}
                     <button
                       onClick={() => handleUpvote(request)}
-                      className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all hover:bg-[var(--accent-glow)] flex-shrink-0"
-                      style={{ border: '1px solid var(--border-color)' }}
+                      className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] hover:border-[var(--accent)] hover:bg-[var(--accent-glow)] transition-colors flex-shrink-0"
                     >
-                      <ThumbsUp size={18} className="text-[var(--accent)]" />
-                      <span className="text-sm font-bold text-[var(--text-primary)]">{request.upvotes}</span>
+                      <ThumbsUp size={15} className="text-[var(--accent)]" />
+                      <span className="font-mono-num text-xs font-bold text-[var(--text-primary)]">
+                        {request.upvotes}
+                      </span>
                     </button>
 
-                    {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-base font-bold text-[var(--text-primary)] truncate">
-                          {request.mangaTitleBn || request.mangaTitle}
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <h3 className="text-base font-semibold text-[var(--text-primary)] truncate">
+                          {request.mangaTitle || request.mangaTitleBn}
                         </h3>
                         <span
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase whitespace-nowrap"
-                          style={{ background: status.bg, color: status.color }}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap ${status.badgeClass}`}
                         >
-                          {status.emoji} {status.label}
+                          <StatusIcon size={10} />
+                          {status.label}
                         </span>
                       </div>
-                      {request.mangaTitleBn && (
-                        <p className="text-xs text-[var(--text-muted)] mb-1">{request.mangaTitle}</p>
+                      {request.mangaTitleBn && request.mangaTitle && (
+                        <p className="text-xs text-[var(--text-muted)] mb-1">{request.mangaTitleBn}</p>
                       )}
-                      <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-2">
+                      <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-2.5 leading-relaxed">
                         {request.description}
                       </p>
-                      <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
-                        <span>by {request.requestedBy}</span>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-muted)]">
+                        <span>Requested by {request.requestedBy}</span>
                         {request.createdAt && (
-                          <span>{new Date(request.createdAt.seconds * 1000).toLocaleDateString()}</span>
+                          <span className="font-mono-num">
+                            {new Date(request.createdAt.seconds * 1000).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              timeZone: 'UTC',
+                            })}
+                          </span>
                         )}
                         {request.adminNote && (
-                          <span className="text-[var(--accent)] flex items-center gap-1">
-                            <AlertCircle size={10} />
+                          <span className="text-[var(--accent)] flex items-center gap-1 font-medium">
+                            <AlertCircle size={12} />
                             Admin: {request.adminNote}
                           </span>
                         )}

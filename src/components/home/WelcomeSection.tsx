@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Search, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { Search, ArrowRight, Send, BookOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { SITE_CONFIG } from '@/lib/config';
 
 export function WelcomeSection() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,97 +18,83 @@ export function WelcomeSection() {
   };
 
   return (
-    <section className="pt-4 sm:pt-8 pb-2 sm:pb-4">
-      <div className="relative text-center">
-        {/* Animated background glow */}
-        <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[150px] sm:h-[300px] rounded-full opacity-20 blur-3xl pointer-events-none"
-          style={{ background: 'var(--accent)' }}
-          animate={{
-            opacity: [0.15, 0.25, 0.15],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        />
+    <div className="flex flex-col justify-between h-full py-1 sm:py-2">
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--accent)] mb-3">
+          Curated Archive &amp; Chapter Tracker
+        </p>
 
-        {/* Accent lines */}
-        <motion.div
-          className="mx-auto mb-3 sm:mb-6 h-[2px] w-0"
-          style={{ background: 'linear-gradient(90deg, transparent, var(--accent), transparent)' }}
-          animate={{ width: ['0%', '60%', '60%'] }}
-          transition={{ duration: 1.5, ease: 'easeOut' }}
-        />
+        <h1 className="font-display font-bold text-3xl sm:text-4xl xl:text-[2.75rem] leading-[1.08] tracking-tight text-[var(--text-primary)] mb-4 text-balance">
+          Discover, Track &amp; Read Curated Manga.
+        </h1>
 
-        {/* Bengali Main Heading */}
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="font-['Bebas_Neue'] text-2xl sm:text-4xl md:text-6xl lg:text-7xl tracking-wide mb-2 sm:mb-3"
-          style={{ color: 'var(--accent)' }}
-        >
-          বাংলায় মাঙ্গা অনুবাদের সেরা ঠিকানা
-        </motion.h1>
+        <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed mb-6 max-w-lg">
+          Explore trending series across English and Bengali editions, organize personal bookmarks, and stay updated with real-time Telegram alerts.
+        </p>
 
-        {/* English Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-          className="text-[var(--text-secondary)] text-sm sm:text-base md:text-xl max-w-2xl mx-auto mb-1 sm:mb-2"
-        >
-          ISKULTRIP SCANS — বাংলা মাঙ্গা পড়ুন, আবিষ্কার করুন নতুন সিরিজ
-        </motion.p>
-
-        {/* Bengali Tagline */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-[var(--text-muted)] text-xs sm:text-sm mb-4 sm:mb-8"
-        >
-          <Sparkles size={14} className="inline mr-1 text-[var(--accent)]" />
-          সেরা বাংলা মাঙ্গা অনুবাদ এখানে — Read manga in Bengali
-        </motion.p>
-
-        {/* Search Bar */}
-        <motion.form
-          onSubmit={handleSearch}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="max-w-lg mx-auto relative"
-        >
-          <div className="relative">
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-            />
+        {/* Inline Catalog Search */}
+        <form onSubmit={handleSearch} className="mb-5">
+          <div
+            className="flex items-center rounded-lg overflow-hidden p-1 transition-colors focus-within:border-[var(--accent)]"
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <Search size={16} className="ml-3 text-[var(--text-muted)] shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="মাঙ্গা খুঁজুন... Search manga..."
-              className="w-full pl-12 pr-4 py-3.5 rounded-xl text-sm outline-none transition-all"
-              style={{
-                background: 'var(--glass-bg)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-primary)',
-                boxShadow: '0 0 20px var(--accent-glow)',
-              }}
+              placeholder="Search title, author, or genre..."
+              className="flex-1 min-w-0 px-3 py-2 bg-transparent text-sm outline-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
             />
+            <button
+              type="submit"
+              className="btn-accent text-xs sm:text-sm px-4 py-2 min-h-[40px] flex items-center gap-1.5 shrink-0"
+            >
+              <span>Search</span>
+              <ArrowRight size={14} />
+            </button>
           </div>
-        </motion.form>
+        </form>
 
-        {/* Bottom accent line */}
-        <motion.div
-          className="mx-auto mt-3 sm:mt-6 h-[2px] w-0"
-          style={{ background: 'linear-gradient(90deg, transparent, var(--accent), transparent)' }}
-          animate={{ width: ['0%', '40%', '40%'] }}
-          transition={{ duration: 1.5, delay: 0.5, ease: 'easeOut' }}
-        />
+        {/* Primary & Secondary Actions */}
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <Link
+            href="/browse"
+            className="btn-accent inline-flex items-center gap-2 text-sm min-h-[44px]"
+          >
+            <BookOpen size={15} />
+            Browse Catalog
+          </Link>
+          <a
+            href={SITE_CONFIG.social.telegram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <Send size={15} className="text-[var(--accent)]" />
+            Telegram Alerts
+          </a>
+        </div>
       </div>
-    </section>
+
+      {/* Unboxed index metadata line */}
+      <div
+        className="pt-4 border-t text-xs text-[var(--text-muted)] flex flex-wrap items-center gap-x-3 gap-y-1"
+        style={{ borderColor: 'var(--border-color)' }}
+      >
+        <span>English &amp; Bengali Catalog</span>
+        <span aria-hidden="true">·</span>
+        <span>Instant Telegram Feed</span>
+        <span aria-hidden="true">·</span>
+        <span>Family-Safe Toggle</span>
+      </div>
+    </div>
   );
 }

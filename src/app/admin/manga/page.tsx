@@ -70,10 +70,10 @@ export default function AdminMangaPage() {
     <div>
       <AdminHeader
         title="All Manga"
-        subtitle={`${allManga.length} total`}
+        subtitle={`${allManga.length} total series`}
         actions={
-          <Link href="/admin/manga/add" className="btn-accent flex items-center gap-2 text-sm">
-            <PlusCircle size={16} /> Add Manga
+          <Link href="/admin/manga/add" className="btn-accent inline-flex items-center gap-2 text-sm">
+            <PlusCircle size={15} /> Add Manga
           </Link>
         }
       />
@@ -82,10 +82,7 @@ export default function AdminMangaPage() {
         <SearchInput value={search} onChange={setSearch} placeholder="Search manga..." />
       </div>
 
-      <div
-        className="rounded-xl overflow-x-auto"
-        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-card)' }}
-      >
+      <div className="rounded-xl overflow-x-auto border border-[var(--border-color)] bg-[var(--bg-secondary)]">
         <MangaTable
           manga={currentItems}
           onDelete={setDeleteTarget}

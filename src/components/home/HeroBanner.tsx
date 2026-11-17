@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, Star } from 'lucide-react';
 import { HeroSkeleton } from '@/components/ui/Skeleton';
+import { HERO_EDITORIAL_ASSET, FALLBACK_COVER_ASSET } from '@/lib/assets';
 import type { Manga } from '@/lib/firestore';
 
 interface HeroBannerProps {
@@ -17,25 +18,64 @@ export function HeroBanner({ manga, loading = false }: HeroBannerProps) {
   const [paused, setPaused] = useState(false);
 
   const next = useCallback(() => {
+    if (manga.length === 0) return;
     setCurrent((prev) => (prev + 1) % manga.length);
   }, [manga.length]);
 
   const prev = useCallback(() => {
+    if (manga.length === 0) return;
     setCurrent((prev) => (prev - 1 + manga.length) % manga.length);
   }, [manga.length]);
 
   useEffect(() => {
-    if (paused || manga.length === 0) return;
-    const timer = setInterval(next, 5000);
+    if (paused || manga.length <= 1) return;
+    const timer = setInterval(next, 5500);
     return () => clearInterval(timer);
   }, [paused, next, manga.length]);
 
   if (loading) return <HeroSkeleton />;
-  if (manga.length === 0) return null;
+
+  if (manga.length === 0) {
+    return (
+      <div
+        className="relative w-full min-h-[300px] sm:min-h-[380px] lg:min-h-[420px] rounded-xl overflow-hidden border"
+        style={{ borderColor: 'var(--border-color)' }}
+      >
+        <Image
+          src={HERO_EDITORIAL_ASSET}
+          alt="MangaBD Editorial Archive"
+          fill
+          className="object-cover"
+          priority
+          referrerPolicy="no-referrer"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/15" />
+        <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-white">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-red-400 mb-2">
+            Editorial Spotlight
+          </p>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight mb-2">
+            The MangaBD Directory
+          </h2>
+          <p className="text-sm text-zinc-200 max-w-md mb-4">
+            Browse curated volumes, follow ongoing chapters, and submit series requests directly to our editors.
+          </p>
+          <Link
+            href="/browse"
+            className="btn-accent inline-flex items-center gap-2 text-xs sm:text-sm"
+          >
+            Explore Catalog
+            <ArrowRight size={15} />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
-      className="relative w-full h-[260px] sm:h-[350px] md:h-[450px] lg:h-[500px] overflow-hidden rounded-xl"
+      className="relative w-full min-h-[320px] sm:min-h-[380px] lg:min-h-[430px] overflow-hidden rounded-xl border"
+      style={{ borderColor: 'var(--border-color)', background: '#111113' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -45,83 +85,79 @@ export function HeroBanner({ manga, loading = false }: HeroBannerProps) {
           className={`hero-slide ${i === current ? 'active' : ''}`}
         >
           <Image
-            src={m.bannerImage || m.coverImage || '/no-cover.png'}
+            src={m.bannerImage || m.coverImage || FALLBACK_COVER_ASSET.src}
             alt={m.title}
             fill
             className="object-cover"
             unoptimized={true}
             priority={i === 0}
+            referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-primary)] via-[var(--bg-primary)]/70 to-transparent hidden sm:block" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/50 to-[var(--bg-primary)]/30 sm:hidden" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/25 to-transparent hidden sm:block" />
 
-          <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-6 md:p-10 sm:max-w-3xl">
-            {/* Bengali badge */}
-            <div className="inline-block mb-1.5 sm:mb-2 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[9px] sm:text-[10px] font-bold uppercase tracking-wide"
-              style={{ background: 'var(--accent-glow)', color: 'var(--accent)', border: '1px solid var(--accent)' }}
-            >
-              বাংলায় পড়ুন
+          <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7 lg:p-8 text-white sm:max-w-xl">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-200 mb-2">
+              <span className="text-red-400 font-semibold">Featured</span>
+              <span aria-hidden="true">·</span>
+              <span className="inline-flex items-center gap-1 font-mono-num">
+                <Star size={11} className="text-amber-400 fill-amber-400" />
+                {m.rating}
+              </span>
+              <span aria-hidden="true">·</span>
+              <span className="font-mono-num">{m.totalChapters} Ch.</span>
+              <span aria-hidden="true">·</span>
+              <span>{m.language.toUpperCase()}</span>
             </div>
 
-            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-1.5 sm:mb-3">
-              {m.genres.slice(0, 2).map((g) => (
-                <span key={g} className="genre-chip text-[10px] sm:text-xs px-2 py-0.5 sm:px-3 sm:py-1">{g}</span>
-              ))}
-            </div>
-            <h2 className="font-['Bebas_Neue'] text-xl sm:text-3xl md:text-5xl tracking-wide text-[var(--text-primary)] mb-0.5 sm:mb-1 line-clamp-2">
+            <h2 className="font-display font-bold text-2xl sm:text-3xl lg:text-4xl tracking-tight text-white mb-1.5 line-clamp-2 text-balance">
               {m.title}
             </h2>
-            {m.titleBn && (
-              <p className="text-xs sm:text-base md:text-lg text-[var(--accent)] mb-1 sm:mb-2 font-medium line-clamp-1">{m.titleBn}</p>
+
+            {m.genres.length > 0 && (
+              <p className="text-xs text-zinc-300 mb-2.5 truncate">
+                {m.genres.slice(0, 3).join(' · ')}
+              </p>
             )}
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-3">
-              <Star size={12} className="text-yellow-400 fill-yellow-400 sm:!w-4 sm:!h-4" />
-              <span className="text-[11px] sm:text-sm font-semibold text-[var(--text-primary)]">{m.rating}</span>
-              <span className="text-[10px] sm:text-xs text-[var(--text-muted)]">· {m.totalChapters} ch · {m.language === 'bn' ? 'বাংলা' : 'EN'}</span>
-            </div>
-            <p className="hidden sm:block text-sm text-[var(--text-secondary)] line-clamp-2 mb-4 max-w-lg">
+
+            <p className="hidden sm:block text-sm text-zinc-200 line-clamp-2 mb-4 max-w-md leading-relaxed">
               {m.description}
             </p>
+
             <Link
               href={`/manga/${m.slug}`}
-              className="btn-accent inline-block text-xs sm:text-sm px-4 py-2 sm:px-7 sm:py-3"
+              className="btn-accent inline-flex items-center gap-2 text-xs sm:text-sm"
             >
-              বিস্তারিত দেখুন
+              View Series
+              <ArrowRight size={14} />
             </Link>
           </div>
         </div>
       ))}
 
-      {/* Navigation Arrows */}
-      <button
-        onClick={prev}
-        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all backdrop-blur-sm z-10"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft size={16} className="sm:!w-5 sm:!h-5" />
-      </button>
-      <button
-        onClick={next}
-        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all backdrop-blur-sm z-10"
-        aria-label="Next slide"
-      >
-        <ChevronRight size={16} className="sm:!w-5 sm:!h-5" />
-      </button>
-
-      {/* Dot Indicators */}
-      <div className="absolute bottom-2 sm:bottom-4 right-3 sm:right-6 flex gap-1.5 sm:gap-2 z-10">
-        {manga.map((_, i) => (
+      {manga.length > 1 && (
+        <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 flex items-center gap-2 z-10">
+          <span className="font-mono-num text-xs text-zinc-200 mr-1">
+            {String(current + 1).padStart(2, '0')} / {String(manga.length).padStart(2, '0')}
+          </span>
           <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all ${
-              i === current ? 'bg-[var(--accent)] w-4 sm:w-6' : 'bg-white/30 hover:bg-white/50'
-            }`}
-            aria-label={`Go to slide ${i + 1}`}
-          />
-        ))}
-      </div>
+            type="button"
+            onClick={prev}
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-black/55 text-white border border-white/15 hover:bg-black/80 transition-colors"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={next}
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-black/55 text-white border border-white/15 hover:bg-black/80 transition-colors"
+            aria-label="Next slide"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

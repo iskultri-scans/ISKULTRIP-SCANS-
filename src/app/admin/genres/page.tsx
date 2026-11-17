@@ -46,7 +46,7 @@ export default function AdminGenresPage() {
 
   return (
     <div>
-      <AdminHeader title="Genre Manager" subtitle={`${genres.length} genres`} />
+      <AdminHeader title="Genre Manager" subtitle={`${genres.length} genres indexed`} />
 
       {loading ? (
         <div className="space-y-2">
@@ -55,10 +55,7 @@ export default function AdminGenresPage() {
           ))}
         </div>
       ) : (
-        <div
-          className="rounded-xl p-6"
-          style={{ border: '1px solid var(--border-color)', background: 'var(--bg-card)' }}
-        >
+        <div className="rounded-xl p-5 sm:p-6 border border-[var(--border-color)] bg-[var(--bg-secondary)]">
           <GenreManager
             genres={genres}
             onAdd={handleAdd}

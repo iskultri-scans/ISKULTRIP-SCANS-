@@ -2,8 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Clock, ExternalLink } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import type { UpcomingRelease } from '@/lib/firestore';
 
@@ -15,16 +14,18 @@ interface UpcomingSectionProps {
 export function UpcomingSection({ releases, loading = false }: UpcomingSectionProps) {
   if (loading) {
     return (
-      <section className="py-4 sm:py-8">
-        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-          <Clock size={20} className="text-[var(--accent)] sm:!w-6 sm:!h-6" />
-          <h2 className="font-['Bebas_Neue'] text-xl sm:text-2xl tracking-wide text-[var(--text-primary)]">
-            আসন্ন রিলিজ / Upcoming
+      <section className="py-8 sm:py-10 border-t" style={{ borderColor: 'var(--border-color)' }}>
+        <div className="mb-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--accent)] mb-1">
+            Release Calendar
+          </p>
+          <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-[var(--text-primary)]">
+            Upcoming Releases
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="skeleton h-48 rounded-xl" />
+            <div key={i} className="skeleton h-48 rounded-lg" />
           ))}
         </div>
       </section>
@@ -34,66 +35,67 @@ export function UpcomingSection({ releases, loading = false }: UpcomingSectionPr
   if (releases.length === 0) return null;
 
   return (
-    <section className="py-4 sm:py-8">
-      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-        <Clock size={20} className="text-[var(--accent)] sm:!w-6 sm:!h-6" />
-        <h2 className="font-['Bebas_Neue'] text-xl sm:text-2xl tracking-wide text-[var(--text-primary)]">
-          আসন্ন রিলিজ / Upcoming Releases
+    <section className="py-8 sm:py-10 border-t" style={{ borderColor: 'var(--border-color)' }}>
+      <div className="mb-5 sm:mb-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--accent)] mb-1">
+          Release Calendar
+        </p>
+        <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-[var(--text-primary)]">
+          Upcoming Releases
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {releases.map((release, index) => (
-          <motion.div
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {releases.map((release) => (
+          <div
             key={release.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.08, duration: 0.4 }}
-            className="rounded-xl overflow-hidden relative group"
+            className="rounded-lg overflow-hidden group transition-colors"
             style={{
-              background: 'var(--bg-card)',
+              background: 'var(--bg-secondary)',
               border: '1px solid var(--border-color)',
             }}
           >
-            {/* Cover Image */}
             {release.coverImage && (
-              <div className="relative h-32 overflow-hidden">
+              <div className="relative h-36 overflow-hidden border-b" style={{ borderColor: 'var(--border-color)' }}>
                 <img
                   src={release.coverImage}
                   alt={release.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  referrerPolicy="no-referrer"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent" />
               </div>
             )}
 
-            <div className="p-4">
-              {/* Title */}
-              <h3 className="text-base font-bold text-[var(--text-primary)] mb-1 truncate">
-                {release.titleBn || release.title}
+            <div className="p-4 sm:p-5">
+              <h3 className="font-display text-base sm:text-lg font-semibold text-[var(--text-primary)] mb-0.5 truncate">
+                {release.title}
               </h3>
               {release.titleBn && (
-                <p className="text-xs text-[var(--text-muted)] mb-3 truncate">{release.title}</p>
+                <p className="text-xs text-[var(--text-muted)] mb-3.5 truncate">{release.titleBn}</p>
               )}
 
-              {/* Countdown */}
-              <CountdownTimer targetDate={release.releaseDate.toDate()} />
+              <CountdownTimer
+                targetDate={
+                  typeof (release.releaseDate as unknown as { toDate?: () => Date })?.toDate === 'function'
+                    ? release.releaseDate.toDate()
+                    : new Date((release.releaseDate?.seconds || 0) * 1000)
+                }
+              />
 
-              {/* Link to manga */}
               {release.mangaSlug && (
                 <Link
                   href={`/manga/${release.mangaSlug}`}
-                  className="mt-3 inline-flex items-center gap-1 text-xs text-[var(--accent)] hover:underline"
+                  className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[var(--accent)] hover:underline"
                 >
-                  <ExternalLink size={12} />
-                  View Manga
+                  Series Details
+                  <ArrowUpRight size={13} />
                 </Link>
               )}
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </section>

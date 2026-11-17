@@ -1,15 +1,6 @@
 'use client';
 
-/**
- * AgeVerificationModal — 18+ confirmation dialog
- *
- * যখন user প্রথমবার Adult Mode-এ যেতে চায়, এই modal দেখানো হয়।
- * Confirm করলে age verified হিসেবে save হয় এবং Adult Mode চালু হয়।
- * Cancel করলে Family Mode-এ থাকে।
- */
-
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Check, X, Eye, EyeOff } from 'lucide-react';
 
 interface AgeVerificationModalProps {
@@ -20,133 +11,113 @@ interface AgeVerificationModalProps {
 export function AgeVerificationModal({ onConfirm, onCancel }: AgeVerificationModalProps) {
   const [checked, setChecked] = useState(false);
 
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onCancel]);
+
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-        style={{ background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)' }}
-        onClick={onCancel}
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-[2px]"
+      onClick={onCancel}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="age-verify-title"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md rounded-xl overflow-hidden shadow-2xl toast-enter"
+        style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-strong)',
+        }}
       >
-        <motion.div
-          initial={{ scale: 0.9, y: 20, opacity: 0 }}
-          animate={{ scale: 1, y: 0, opacity: 1 }}
-          exit={{ scale: 0.9, y: 20, opacity: 0 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-          onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-md rounded-2xl overflow-hidden"
-          style={{
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-color)',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 60px rgba(239, 68, 68, 0.15)',
-          }}
+        <button
+          type="button"
+          onClick={onCancel}
+          className="absolute top-3 right-3 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
+          aria-label="Close modal"
         >
-          {/* Top accent line — red for warning */}
+          <X size={18} />
+        </button>
+
+        <div className="p-6 sm:p-8 text-center">
           <div
-            className="h-1 w-full"
-            style={{ background: 'linear-gradient(90deg, transparent, #ef4444, transparent)' }}
-          />
-
-          <button
-            onClick={onCancel}
-            className="absolute top-3 right-3 p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors z-10"
-            aria-label="বন্ধ করুন"
+            className="w-12 h-12 mx-auto mb-4 rounded-lg flex items-center justify-center"
+            style={{
+              background: 'var(--accent-glow)',
+              border: '1px solid var(--accent)',
+            }}
           >
-            <X size={18} />
-          </button>
+            <ShieldAlert size={24} className="text-[var(--accent)]" />
+          </div>
 
-          <div className="p-6 sm:p-8 text-center">
-            {/* Icon */}
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', damping: 15, delay: 0.1 }}
-              className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+          <h2 id="age-verify-title" className="font-display text-2xl font-bold tracking-tight text-[var(--text-primary)] mb-2">
+            Enable Adult Mode (18+)
+          </h2>
+          <p className="text-sm text-[var(--text-secondary)] mb-5 leading-relaxed">
+            This mode displays mature 18+ series. Confirm that you are{' '}
+            <strong className="text-[var(--text-primary)]">18 years of age or older</strong>.
+          </p>
+
+          <div
+            className="text-left rounded-lg p-3.5 mb-5 space-y-2.5"
+            style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
+          >
+            <div className="flex items-start gap-2.5">
+              <Eye size={14} className="text-[var(--accent)] mt-0.5 shrink-0" />
+              <p className="text-xs text-[var(--text-secondary)]">
+                Adult-tagged series are displayed and clearly marked with an 18+ indicator.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <EyeOff size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-[var(--text-secondary)]">
+                Switch back to Family Mode anytime from the top navigation bar.
+              </p>
+            </div>
+          </div>
+
+          <label className="flex items-center justify-center gap-2.5 cursor-pointer mb-5">
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={(e) => setChecked(e.target.checked)}
+              className="w-4 h-4 rounded accent-[var(--accent)]"
+            />
+            <span className="text-xs text-[var(--text-secondary)]">
+              I confirm that I am 18+ and consent to viewing mature content.
+            </span>
+          </label>
+
+          <div className="flex flex-col sm:flex-row gap-2.5">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 px-4 py-2.5 min-h-[42px] rounded-lg text-sm font-semibold transition-colors cursor-pointer"
               style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '2px solid rgba(239, 68, 68, 0.3)',
+                background: 'var(--bg-primary)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-secondary)',
               }}
             >
-              <ShieldAlert size={32} className="text-red-500" />
-            </motion.div>
-
-            <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl tracking-wide text-[var(--text-primary)] mb-2">
-              Adult Mode চালু করুন
-            </h2>
-            <p className="text-sm text-[var(--text-secondary)] mb-5 leading-relaxed">
-              এই মোডে ১৮+ কনটেন্ট দেখানো হবে। অনুগ্রহ করে নিশ্চিত করুন যে আপনি{' '}
-              <strong className="text-[var(--text-primary)]">১৮ বছর বা তার বেশি বয়সী</strong>।
-            </p>
-
-            {/* What changes — info box */}
-            <div
-              className="text-left rounded-xl p-3 mb-5 space-y-2"
-              style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={!checked}
+              className="flex-1 btn-accent flex items-center justify-center gap-2 text-sm min-h-[42px] cursor-pointer"
             >
-              <div className="flex items-start gap-2">
-                <Eye size={14} className="text-red-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-[var(--text-secondary)]">
-                  Adult ট্যাগযুক্ত মাঙ্গা দেখা যাবে এবং 18+ badge দেখানো হবে
-                </p>
-              </div>
-              <div className="flex items-start gap-2">
-                <EyeOff size={14} className="text-emerald-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-[var(--text-secondary)]">
-                  যেকোনো সময় Family Mode-এ ফিরে যেতে পারবেন
-                </p>
-              </div>
-            </div>
-
-            {/* Confirmation checkbox */}
-            <label className="flex items-center justify-center gap-2 cursor-pointer mb-5">
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={(e) => setChecked(e.target.checked)}
-                className="w-4 h-4 rounded accent-red-500"
-              />
-              <span className="text-xs text-[var(--text-secondary)]">
-                আমি নিশ্চিত করছি যে আমি ১৮+ এবং এই কনটেন্ট দেখতে সম্মত
-              </span>
-            </label>
-
-            {/* Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={onCancel}
-                className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all"
-                style={{
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-color)',
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                বাতিল
-              </button>
-              <button
-                onClick={onConfirm}
-                disabled={!checked}
-                className="flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{
-                  background: checked ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'var(--bg-primary)',
-                  color: checked ? '#ffffff' : 'var(--text-muted)',
-                  border: checked ? 'none' : '1px solid var(--border-color)',
-                  boxShadow: checked ? '0 4px 20px rgba(239, 68, 68, 0.4)' : 'none',
-                }}
-              >
-                <Check size={16} />
-                Adult Mode চালু করুন
-              </button>
-            </div>
-
-            <p className="text-[10px] text-[var(--text-muted)] mt-4">
-              🔒 আপনার verification শুধুমাত্র এই ব্রাউজারে save হবে, কোথাও share করা হয় না।
-            </p>
+              <Check size={16} />
+              Enable Adult Mode
+            </button>
           </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+        </div>
+      </div>
+    </div>
   );
 }

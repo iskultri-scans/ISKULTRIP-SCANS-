@@ -32,35 +32,37 @@ export function Pagination({ currentPage, totalPages, onPageChange, hasNext, has
   };
 
   return (
-    <div className="flex items-center justify-center gap-2 mt-8">
+    <div className="flex items-center justify-center gap-1.5 mt-10">
       <button
+        type="button"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={!hasPrev}
         className={cn(
-          'flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all',
+          'flex items-center gap-1 px-3 min-h-[38px] rounded-lg text-xs font-medium transition-colors',
           hasPrev
-            ? 'text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)]'
-            : 'text-[var(--text-muted)] cursor-not-allowed'
+            ? 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]'
+            : 'text-[var(--text-muted)] opacity-50 cursor-not-allowed'
         )}
       >
-        <ChevronLeft size={16} />
+        <ChevronLeft size={15} />
         Prev
       </button>
 
       {getPages().map((page, idx) =>
         typeof page === 'string' ? (
-          <span key={`dots-${idx}`} className="px-2 text-[var(--text-muted)]">
+          <span key={`dots-${idx}`} className="px-2 text-xs text-[var(--text-muted)]">
             ...
           </span>
         ) : (
           <button
+            type="button"
             key={page}
             onClick={() => onPageChange(page)}
             className={cn(
-              'w-9 h-9 rounded-lg text-sm font-medium transition-all',
+              'w-9 h-9 rounded-lg font-mono-num text-xs font-semibold transition-colors',
               page === currentPage
-                ? 'bg-[var(--accent)] text-[#0a0a0f]'
-                : 'text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)]'
+                ? 'bg-[var(--accent)] text-white'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]'
             )}
           >
             {page}
@@ -69,17 +71,18 @@ export function Pagination({ currentPage, totalPages, onPageChange, hasNext, has
       )}
 
       <button
+        type="button"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={!hasNext}
         className={cn(
-          'flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all',
+          'flex items-center gap-1 px-3 min-h-[38px] rounded-lg text-xs font-medium transition-colors',
           hasNext
-            ? 'text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-glow)]'
-            : 'text-[var(--text-muted)] cursor-not-allowed'
+            ? 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]'
+            : 'text-[var(--text-muted)] opacity-50 cursor-not-allowed'
         )}
       >
         Next
-        <ChevronRight size={16} />
+        <ChevronRight size={15} />
       </button>
     </div>
   );

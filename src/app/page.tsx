@@ -66,12 +66,17 @@ export default async function HomePage() {
   const filterAdult = <T extends { isAdult?: boolean }>(list: T[]): T[] =>
     includeAdult ? list : list.filter((m) => !m.isAdult);
 
+  // Convert Firestore Timestamp instances into plain { seconds, nanoseconds } objects for RSC serialization
+  const toPlain = <T,>(val: T): T => JSON.parse(JSON.stringify(val));
+
   const safeData = {
-    ...data,
-    featured: filterAdult(data.featured),
-    trending: filterAdult(data.trending),
-    latest: filterAdult(data.latest),
-    bnManga: filterAdult(data.bnManga),
+    genres: toPlain(data.genres),
+    featured: toPlain(filterAdult(data.featured)),
+    trending: toPlain(filterAdult(data.trending)),
+    latest: toPlain(filterAdult(data.latest)),
+    bnManga: toPlain(filterAdult(data.bnManga)),
+    announcements: toPlain(data.announcements),
+    upcoming: toPlain(data.upcoming),
   };
 
   const genreSlugs = safeData.genres.map((g) => ({ name: g.name, slug: g.slug }));

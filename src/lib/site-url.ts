@@ -2,13 +2,13 @@
  * Site URL helper — safely returns a valid absolute URL.
  *
  * Vercel's NEXT_PUBLIC_SITE_URL environment variable can sometimes be set
- * without a protocol (e.g., 'iskultrip-scans-.vercel.app'), which breaks
+ * without a protocol (e.g., 'mangabd.vercel.app'), which breaks
  * `new URL()`. This helper auto-prepends 'https://' if missing.
  *
  * Always use this instead of reading process.env.NEXT_PUBLIC_SITE_URL directly.
  */
 
-const FALLBACK_URL = 'https://iskultrip-scans.vercel.app';
+const FALLBACK_URL = 'https://mangabd.vercel.app';
 
 function normalizeUrl(input: string | undefined): string {
   if (!input || typeof input !== 'string' || input.trim() === '') {

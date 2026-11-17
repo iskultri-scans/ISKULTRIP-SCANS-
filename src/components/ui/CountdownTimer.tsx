@@ -18,11 +18,12 @@ export function CountdownTimer({ targetDate, onComplete }: CountdownTimerProps) 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isComplete, setIsComplete] = useState(false);
 
+  const targetMs = targetDate.getTime();
+
   useEffect(() => {
     function calculateTime() {
-      const now = new Date().getTime();
-      const target = targetDate.getTime();
-      const difference = target - now;
+      const now = Date.now();
+      const difference = targetMs - now;
 
       if (difference <= 0) {
         setIsComplete(true);
@@ -42,22 +43,22 @@ export function CountdownTimer({ targetDate, onComplete }: CountdownTimerProps) 
     calculateTime();
     const interval = setInterval(calculateTime, 1000);
     return () => clearInterval(interval);
-  }, [targetDate, onComplete]);
+  }, [targetMs, onComplete]);
 
   const blocks = [
-    { value: timeLeft.days, label: 'দিন' },
-    { value: timeLeft.hours, label: 'ঘণ্টা' },
-    { value: timeLeft.minutes, label: 'মিনিট' },
-    { value: timeLeft.seconds, label: 'সেকেন্ড' },
+    { value: timeLeft.days, label: 'Days' },
+    { value: timeLeft.hours, label: 'Hrs' },
+    { value: timeLeft.minutes, label: 'Min' },
+    { value: timeLeft.seconds, label: 'Sec' },
   ];
 
   if (isComplete) {
     return (
       <div
-        className="px-3 py-1.5 rounded-lg text-xs font-bold"
+        className="px-3 py-1.5 rounded-md text-xs font-semibold inline-block"
         style={{ background: 'var(--accent-glow)', color: 'var(--accent)' }}
       >
-        এখন উপলব্ধ! Available Now!
+        Available Now
       </div>
     );
   }
@@ -68,22 +69,21 @@ export function CountdownTimer({ targetDate, onComplete }: CountdownTimerProps) 
         <React.Fragment key={block.label}>
           <div className="flex flex-col items-center">
             <div
-              className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg text-sm sm:text-base font-bold"
+              className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-md font-mono-num text-sm sm:text-base font-semibold"
               style={{
-                background: 'var(--accent-glow)',
-                color: 'var(--accent)',
-                border: '1px solid var(--accent)',
-                boxShadow: '0 0 10px var(--accent-glow)',
+                background: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
               }}
             >
               {String(block.value).padStart(2, '0')}
             </div>
-            <span className="text-[9px] sm:text-[10px] text-[var(--text-muted)] mt-0.5">
+            <span className="text-[10px] text-[var(--text-muted)] mt-1 uppercase tracking-wider">
               {block.label}
             </span>
           </div>
           {i < blocks.length - 1 && (
-            <span className="text-[var(--accent)] font-bold text-sm mb-4">:</span>
+            <span className="text-[var(--text-muted)] font-mono-num font-bold text-sm mb-4">:</span>
           )}
         </React.Fragment>
       ))}

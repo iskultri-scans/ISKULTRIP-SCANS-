@@ -8,12 +8,15 @@ export function Skeleton({ className = '', ...props }: React.HTMLAttributes<HTML
 
 export function MangaCardSkeleton() {
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-card)' }}>
-      <Skeleton className="w-full" style={{ aspectRatio: '3/4' }} />
+    <div
+      className="rounded-lg overflow-hidden border"
+      style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+    >
+      <Skeleton className="w-full rounded-none" style={{ aspectRatio: '3/4' }} />
       <div className="p-3 space-y-2">
+        <Skeleton className="h-3 w-1/3" />
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-1/2" />
-        <Skeleton className="h-3 w-2/3" />
       </div>
     </div>
   );
@@ -21,6 +24,6 @@ export function MangaCardSkeleton() {
 
 export function HeroSkeleton() {
   return (
-    <Skeleton className="w-full h-[260px] sm:h-[350px] md:h-[450px] lg:h-[500px] rounded-xl" />
+    <Skeleton className="w-full min-h-[320px] sm:min-h-[380px] lg:min-h-[430px] rounded-xl" />
   );
 }

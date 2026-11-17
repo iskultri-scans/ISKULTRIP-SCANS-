@@ -10,12 +10,14 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ title, subtitle, actions }: AdminHeaderProps) {
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 mb-6 border-b border-[var(--border-color)]">
       <div>
-        <h1 className="font-['Bebas_Neue'] text-2xl tracking-wide text-[var(--text-primary)]">{title}</h1>
-        {subtitle && <p className="text-sm text-[var(--text-muted)]">{subtitle}</p>}
+        <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+          {title}
+        </h1>
+        {subtitle && <p className="text-sm text-[var(--text-muted)] mt-1">{subtitle}</p>}
       </div>
-      {actions && <div className="flex items-center gap-3">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2.5">{actions}</div>}
     </div>
   );
 }

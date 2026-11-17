@@ -3,7 +3,20 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, BookOpen, PlusCircle, Tags, LogOut, FilePlus, Megaphone, Clock, MessageSquare, MoreHorizontal, X } from 'lucide-react';
+import {
+  LayoutDashboard,
+  BookOpen,
+  PlusCircle,
+  Tags,
+  LogOut,
+  FilePlus,
+  Megaphone,
+  Clock,
+  MessageSquare,
+  MoreHorizontal,
+  X,
+  Send,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -16,23 +29,23 @@ const navItems = [
   { href: '/admin/manga', label: 'All Manga', icon: BookOpen },
   { href: '/admin/manga/add', label: 'Add Manga', icon: PlusCircle },
   { href: '/admin/chapters', label: 'Post Chapter', icon: FilePlus },
+  { href: '/admin/telegram', label: 'Telegram Broadcast', icon: Send },
   { href: '/admin/genres', label: 'Genres', icon: Tags },
   { href: '/admin/blog', label: 'Blog / Announcements', icon: Megaphone },
   { href: '/admin/upcoming', label: 'Upcoming Releases', icon: Clock },
   { href: '/admin/requests', label: 'User Requests', icon: MessageSquare },
 ];
 
-// Mobile bottom bar items (main actions)
 const mobileNavItems = [
   { href: '/admin', label: 'Home', icon: LayoutDashboard },
   { href: '/admin/manga', label: 'Manga', icon: BookOpen },
   { href: '/admin/manga/add', label: 'Add', icon: PlusCircle },
-  { href: '/admin/blog', label: 'Blog', icon: Megaphone },
   { href: '/admin/chapters', label: 'Chapter', icon: FilePlus },
+  { href: '/admin/telegram', label: 'Telegram', icon: Send },
 ];
 
-// Items accessible via "More" menu on mobile
 const moreNavItems = [
+  { href: '/admin/blog', label: 'Blog & News', icon: Megaphone },
   { href: '/admin/genres', label: 'Genres', icon: Tags },
   { href: '/admin/upcoming', label: 'Upcoming', icon: Clock },
   { href: '/admin/requests', label: 'Requests', icon: MessageSquare },
@@ -45,27 +58,25 @@ export function AdminSidebar({ onSignOut }: AdminSidebarProps) {
   const isActive = (href: string) =>
     pathname === href || (href !== '/admin' && pathname.startsWith(href));
 
-  // Check if any "more" item is active
   const isMoreActive = moreNavItems.some((item) => isActive(item.href));
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside
-        className="hidden lg:flex w-64 h-screen sticky top-0 flex-col border-r"
-        style={{
-          background: 'var(--bg-secondary)',
-          borderColor: 'var(--border-color)',
-        }}
-      >
-        <div className="p-6 border-b" style={{ borderColor: 'var(--border-color)' }}>
-          <Link href="/admin" className="font-['Bebas_Neue'] text-xl tracking-widest" style={{ color: 'var(--accent)' }}>
-            ISKULTRIP SCANS
+      <aside className="hidden lg:flex w-64 h-screen sticky top-0 flex-col border-r border-[var(--border-color)] bg-[var(--bg-secondary)]">
+        <div className="px-6 py-5 border-b border-[var(--border-color)]">
+          <Link
+            href="/admin"
+            className="font-display text-2xl font-bold tracking-tight text-[var(--text-primary)] inline-block"
+          >
+            Manga<span className="text-[var(--accent)]">BD</span>
           </Link>
-          <p className="text-xs text-[var(--text-muted)] mt-1">Admin Panel</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)] mt-1">
+            Editorial Console
+          </p>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-3.5 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const active = isActive(item.href);
             return (
@@ -77,19 +88,19 @@ export function AdminSidebar({ onSignOut }: AdminSidebarProps) {
                   active && 'active'
                 )}
               >
-                <item.icon size={18} />
+                <item.icon size={17} />
                 {item.label}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
+        <div className="p-3.5 border-t border-[var(--border-color)]">
           <button
             onClick={onSignOut}
-            className="admin-nav-item flex items-center gap-3 text-sm w-full text-left text-red-400 hover:text-red-300 hover:bg-red-400/10"
+            className="admin-nav-item flex items-center gap-3 text-sm w-full text-left text-red-600 dark:text-red-400 hover:bg-red-500/10"
           >
-            <LogOut size={18} />
+            <LogOut size={17} />
             Sign Out
           </button>
         </div>
@@ -97,12 +108,8 @@ export function AdminSidebar({ onSignOut }: AdminSidebarProps) {
 
       {/* Mobile Bottom Navigation Bar */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t"
-        style={{
-          background: 'var(--bg-secondary)',
-          borderColor: 'var(--border-color)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        }}
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-[var(--border-color)] bg-[var(--bg-secondary)]"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         {mobileNavItems.map((item) => {
           const active = isActive(item.href);
@@ -116,11 +123,10 @@ export function AdminSidebar({ onSignOut }: AdminSidebarProps) {
               }}
             >
               <item.icon size={18} />
-              <span className="text-[9px] mt-0.5 leading-tight">{item.label}</span>
+              <span className="text-[10px] font-medium mt-0.5 leading-tight">{item.label}</span>
             </Link>
           );
         })}
-        {/* More button */}
         <button
           onClick={() => setMoreOpen(!moreOpen)}
           className="flex flex-col items-center justify-center py-2.5 px-2 min-w-[48px] transition-colors"
@@ -129,7 +135,7 @@ export function AdminSidebar({ onSignOut }: AdminSidebarProps) {
           }}
         >
           {moreOpen ? <X size={18} /> : <MoreHorizontal size={18} />}
-          <span className="text-[9px] mt-0.5 leading-tight">{moreOpen ? 'Close' : 'More'}</span>
+          <span className="text-[10px] font-medium mt-0.5 leading-tight">{moreOpen ? 'Close' : 'More'}</span>
         </button>
       </nav>
 
@@ -145,26 +151,13 @@ export function AdminSidebar({ onSignOut }: AdminSidebarProps) {
               onClick={() => setMoreOpen(false)}
             />
             <motion.div
-              initial={{ y: 100, opacity: 0 }}
+              initial={{ y: 80, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 100, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="lg:hidden fixed bottom-14 left-3 right-3 z-50 rounded-xl overflow-hidden"
-              style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-color)',
-                boxShadow: '0 -10px 40px rgba(0,0,0,0.5), 0 0 20px var(--accent-glow)',
-                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-              }}
+              exit={{ y: 80, opacity: 0 }}
+              transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+              className="lg:hidden fixed bottom-16 left-3 right-3 z-50 rounded-xl overflow-hidden border border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-xl"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
-              {/* Top accent line */}
-              <div
-                className="h-0.5 w-full"
-                style={{
-                  background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
-                }}
-              />
-
               <div className="p-3 space-y-1">
                 {moreNavItems.map((item) => {
                   const active = isActive(item.href);
@@ -184,11 +177,10 @@ export function AdminSidebar({ onSignOut }: AdminSidebarProps) {
                   );
                 })}
 
-                {/* Sign Out in More menu */}
-                <div className="pt-2 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                <div className="pt-2 border-t border-[var(--border-color)]">
                   <button
                     onClick={() => { setMoreOpen(false); onSignOut?.(); }}
-                    className="admin-nav-item flex items-center gap-3 text-sm w-full text-left text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                    className="admin-nav-item flex items-center gap-3 text-sm w-full text-left text-red-600 dark:text-red-400 hover:bg-red-500/10"
                   >
                     <LogOut size={16} />
                     Sign Out

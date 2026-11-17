@@ -37,13 +37,18 @@ const serviceAccount = {
   privateKey: (process.env.FIREBASE_ADMIN_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
 };
 
+const { getFirestore } = require('firebase-admin/firestore');
+const appletConfig = require('../firebase-applet-config.json');
+
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
 }
 
-const db = admin.firestore();
+const db = appletConfig.firestoreDatabaseId
+  ? getFirestore(admin.app(), appletConfig.firestoreDatabaseId)
+  : admin.firestore();
 
 // ─── Genre Data ─────────────────────────────────────────────
 const genres = [

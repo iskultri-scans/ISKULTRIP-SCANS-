@@ -8,9 +8,21 @@ import { motion } from 'framer-motion';
 import { Calendar, ArrowRight, Megaphone, Zap, Clock } from 'lucide-react';
 
 const typeConfig = {
-  announcement: { icon: Megaphone, emoji: '📢', label: 'Update', color: '#00d4ff', bg: 'rgba(0, 212, 255, 0.1)' },
-  upcoming: { icon: Calendar, emoji: '📅', label: 'Upcoming', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
-  update: { icon: Zap, emoji: '🔥', label: 'New', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
+  announcement: {
+    icon: Megaphone,
+    label: 'Announcement',
+    badgeClass: 'text-[var(--accent)] bg-[var(--accent-glow)] border-[var(--border-color)]',
+  },
+  upcoming: {
+    icon: Calendar,
+    label: 'Upcoming',
+    badgeClass: 'text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/20',
+  },
+  update: {
+    icon: Zap,
+    label: 'Release',
+    badgeClass: 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+  },
 };
 
 export default function BlogPage() {
@@ -45,58 +57,63 @@ export default function BlogPage() {
 
   return (
     <PublicLayout genres={genreSlugs}>
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+        <motion.header
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="pb-6 mb-6 border-b border-[var(--border-color)]"
         >
-          <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl tracking-wide text-[var(--text-primary)] mb-2">
-            ব্লগ / Blog
-          </h1>
-          <p className="text-[var(--text-secondary)]">
-            সর্বশেষ ঘোষণা ও আপডেট — Latest announcements and updates
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--accent)] mb-1.5">
+            Journal &amp; Dispatches
           </p>
-        </motion.div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-[var(--text-primary)]">
+            News &amp; Blog
+          </h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1.5">
+            Platform dispatches, release schedules, and editorial announcements.
+          </p>
+        </motion.header>
 
         {/* Filter Tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar">
           {[
-            { value: 'all', label: 'All' },
-            { value: 'update', label: '🔥 New' },
-            { value: 'upcoming', label: '📅 Upcoming' },
-            { value: 'announcement', label: '📢 Updates' },
-          ].map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setFilter(tab.value)}
-              className="genre-chip text-xs whitespace-nowrap"
-              style={{
-                borderColor: filter === tab.value ? 'var(--accent)' : undefined,
-                background: filter === tab.value ? 'var(--accent-glow)' : undefined,
-                color: filter === tab.value ? 'var(--accent)' : undefined,
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+            { value: 'all', label: 'All Dispatches' },
+            { value: 'update', label: 'Releases' },
+            { value: 'upcoming', label: 'Upcoming' },
+            { value: 'announcement', label: 'Announcements' },
+          ].map((tab) => {
+            const active = filter === tab.value;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => setFilter(tab.value)}
+                className={`px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors border ${
+                  active
+                    ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Blog Posts */}
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="skeleton h-48 rounded-xl" />
+              <div key={i} className="skeleton h-44 rounded-xl" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <Megaphone size={48} className="mx-auto text-[var(--text-muted)] mb-4" />
-            <h3 className="font-['Bebas_Neue'] text-xl text-[var(--text-secondary)] mb-2">
-              কোনো পোস্ট নেই
+          <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-center py-16 px-6">
+            <Megaphone size={36} className="mx-auto text-[var(--text-muted)] mb-3" strokeWidth={1.6} />
+            <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mb-1">
+              No Dispatches Found
             </h3>
-            <p className="text-sm text-[var(--text-muted)]">No blog posts yet. Check back later!</p>
+            <p className="text-sm text-[var(--text-muted)]">No editorial updates yet. Check back soon.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -106,73 +123,62 @@ export default function BlogPage() {
               return (
                 <motion.div
                   key={post.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{ delay: index * 0.04 }}
                 >
-                  <Link href={`/blog/${post.id}`}>
-                    <div
-                      className="rounded-xl overflow-hidden transition-all hover:scale-[1.01] group"
-                      style={{
-                        background: 'var(--bg-card)',
-                        border: '1px solid var(--border-color)',
-                      }}
-                    >
-                      {/* Cover Image */}
+                  <Link href={`/blog/${post.id}`} className="block group">
+                    <article className="rounded-xl overflow-hidden border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:border-[var(--border-strong)] transition-colors">
                       {post.coverImage && (
-                        <div className="relative h-48 sm:h-56 overflow-hidden">
+                        <div className="relative h-48 sm:h-56 overflow-hidden border-b border-[var(--border-color)] bg-[var(--bg-subtle)]">
                           <img
                             src={post.coverImage}
                             alt={post.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none';
                             }}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent" />
                         </div>
                       )}
 
-                      <div className="p-5">
-                        {/* Type Badge */}
-                        <div className="flex items-center gap-2 mb-3">
+                      <div className="p-5 sm:p-6">
+                        <div className="flex items-center gap-3 mb-3">
                           <span
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold uppercase"
-                            style={{ background: config.bg, color: config.color }}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-semibold uppercase tracking-wider ${config.badgeClass}`}
                           >
                             <IconComp size={12} />
                             {config.label}
                           </span>
                           {post.createdAt && (
-                            <span className="text-xs text-[var(--text-muted)] flex items-center gap-1">
-                              <Clock size={10} />
-                              {new Date(post.createdAt.seconds * 1000).toLocaleDateString('bn-BD', {
+                            <span className="font-mono-num text-xs text-[var(--text-muted)] flex items-center gap-1.5">
+                              <Clock size={12} />
+                              {new Date(post.createdAt.seconds * 1000).toLocaleDateString('en-US', {
                                 year: 'numeric',
-                                month: 'long',
+                                month: 'short',
                                 day: 'numeric',
+                                timeZone: 'UTC',
                               })}
                             </span>
                           )}
                         </div>
 
-                        {/* Title */}
-                        <h2 className="text-lg font-bold text-[var(--text-primary)] mb-1 group-hover:text-[var(--accent)] transition-colors">
-                          {post.titleBn || post.title}
+                        <h2 className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)] mb-1 group-hover:text-[var(--accent)] transition-colors">
+                          {post.title || post.titleBn}
                         </h2>
-                        {post.titleBn && (
-                          <p className="text-sm text-[var(--text-muted)] mb-2">{post.title}</p>
+                        {post.titleBn && post.title && (
+                          <p className="text-sm text-[var(--text-muted)] mb-2">{post.titleBn}</p>
                         )}
 
-                        {/* Excerpt */}
-                        <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-3">
-                          {post.contentBn || post.content}
+                        <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-4 leading-relaxed">
+                          {post.content || post.contentBn}
                         </p>
 
-                        <span className="inline-flex items-center gap-1 text-xs text-[var(--accent)] font-medium group-hover:gap-2 transition-all">
-                          আরও পড়ুন Read More <ArrowRight size={12} />
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--accent)]">
+                          Read Dispatch <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
                         </span>
                       </div>
-                    </div>
+                    </article>
                   </Link>
                 </motion.div>
               );

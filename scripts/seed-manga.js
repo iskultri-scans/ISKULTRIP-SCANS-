@@ -66,6 +66,9 @@ if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
   privateKey = privateKey.slice(1, -1);
 }
 
+const { getFirestore } = require('firebase-admin/firestore');
+const appletConfig = require('../firebase-applet-config.json');
+
 admin.initializeApp({
   credential: admin.credential.cert({
     projectId,
@@ -74,7 +77,9 @@ admin.initializeApp({
   }),
 });
 
-const db = admin.firestore();
+const db = appletConfig.firestoreDatabaseId
+  ? getFirestore(admin.app(), appletConfig.firestoreDatabaseId)
+  : admin.firestore();
 
 // ─── Demo Genres ─────────────────────────────────────────
 const demoGenres = [

@@ -14,15 +14,87 @@ import {
   Timestamp,
   QueryConstraint,
 } from 'firebase/firestore';
-import { getFirebaseDb } from './firebase';
+import { getFirebaseAuth, getFirebaseDb } from './firebase';
+import {
+  DEMO_MANGA,
+  DEMO_GENRES,
+  DEMO_CHAPTERS_BY_SLUG,
+  DEMO_ANNOUNCEMENTS,
+  DEMO_NOTIFICATIONS,
+  DEMO_REQUESTS,
+  getDemoUpcomingReleases,
+  getDemoMangaWithChapters,
+} from './demo-catalog';
+
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  };
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): never {
+  let currentUser: ReturnType<typeof getFirebaseAuth>['currentUser'] = null;
+  try {
+    currentUser = getFirebaseAuth().currentUser;
+  } catch {
+    currentUser = null;
+  }
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: currentUser?.uid,
+      email: currentUser?.email,
+      emailVerified: currentUser?.emailVerified,
+      isAnonymous: currentUser?.isAnonymous,
+      tenantId: currentUser?.tenantId,
+      providerInfo:
+        currentUser?.providerData?.map((provider) => ({
+          providerId: provider.providerId,
+          email: provider.email,
+        })) || [],
+    },
+    operationType,
+    path,
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 // Types
+export interface ChapterPage {
+  pageNumber: number;
+  fileId: string;
+  width?: number;
+  height?: number;
+}
+
 export interface Chapter {
   id: string;
   mangaId: string;
   title: string;
   chapterNumber: number;
   readLink: string;
+  pages?: ChapterPage[];
   createdAt: Timestamp;
 }
 
@@ -120,10 +192,18 @@ export async function getAllManga(constraints: QueryConstraint[] = []): Promise<
   try {
     const q = query(collection(getFirebaseDb(), 'manga'), ...constraints);
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Manga);
+    if (!snap.empty) {
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Manga);
+    }
+    if (constraints.length === 0) {
+      return DEMO_MANGA;
+    }
+    // Check if the collection itself has any documents before returning demo fallback
+    const baseSnap = await getDocs(query(collection(getFirebaseDb(), 'manga'), limit(1)));
+    return baseSnap.empty ? DEMO_MANGA : [];
   } catch (error) {
     console.error('Error fetching manga:', error);
-    return [];
+    return DEMO_MANGA;
   }
 }
 
@@ -131,7 +211,10 @@ export async function getMangaBySlug(slug: string): Promise<Manga | null> {
   try {
     const q = query(collection(getFirebaseDb(), 'manga'), where('slug', '==', slug), limit(1));
     const snap = await getDocs(q);
-    if (snap.empty) return null;
+    if (snap.empty) {
+      const baseSnap = await getDocs(query(collection(getFirebaseDb(), 'manga'), limit(1)));
+      return baseSnap.empty ? getDemoMangaWithChapters(slug) : null;
+    }
     const manga = { id: snap.docs[0].id, ...snap.docs[0].data() } as Manga;
 
     // Fetch chapters for this manga
@@ -141,14 +224,17 @@ export async function getMangaBySlug(slug: string): Promise<Manga | null> {
     return manga;
   } catch (error) {
     console.error('Error fetching manga by slug:', error);
-    return null;
+    return getDemoMangaWithChapters(slug);
   }
 }
 
 export async function getMangaById(id: string): Promise<Manga | null> {
   try {
     const snap = await getDoc(doc(getFirebaseDb(), 'manga', id));
-    if (!snap.exists()) return null;
+    if (!snap.exists()) {
+      const demo = DEMO_MANGA.find((m) => m.id === id);
+      return demo ? getDemoMangaWithChapters(demo.slug) : null;
+    }
     const manga = { id: snap.id, ...snap.data() } as Manga;
 
     // Fetch chapters
@@ -162,9 +248,6 @@ export async function getMangaById(id: string): Promise<Manga | null> {
   }
 }
 
-// ✅ Uses proper Firestore where() + orderBy() with composite index.
-// Composite index required (auto-created on first query failure, or set up in Firebase Console):
-//   Collection: manga | Fields: featured (Ascending), updatedAt (Descending)
 export async function getFeaturedManga(): Promise<Manga[]> {
   try {
     const allManga = await getAllManga([
@@ -172,23 +255,20 @@ export async function getFeaturedManga(): Promise<Manga[]> {
       orderBy('updatedAt', 'desc'),
       limit(10),
     ]);
-    return allManga;
+    const filtered = allManga.filter((m) => m.featured === true);
+    return filtered.slice(0, 10);
   } catch (error) {
-    // Fallback: client-side filter if composite index not yet created
-    console.warn('[getFeaturedManga] Falling back to client-side filter. Create composite index:', error);
+    console.warn('[getFeaturedManga] Falling back to client-side filter:', error);
     try {
       const allManga = await getAllManga([orderBy('updatedAt', 'desc'), limit(50)]);
       return allManga.filter((m) => m.featured === true).slice(0, 10);
     } catch (err) {
       console.error('Error fetching featured manga:', err);
-      return [];
+      return DEMO_MANGA.filter((m) => m.featured);
     }
   }
 }
 
-// ✅ Uses proper Firestore where() + orderBy() with composite index.
-// Composite index required:
-//   Collection: manga | Fields: trending (Ascending), rating (Descending)
 export async function getTrendingManga(): Promise<Manga[]> {
   try {
     const allManga = await getAllManga([
@@ -196,27 +276,27 @@ export async function getTrendingManga(): Promise<Manga[]> {
       orderBy('rating', 'desc'),
       limit(20),
     ]);
-    return allManga;
+    return allManga
+      .filter((m) => m.trending === true)
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 20);
   } catch (error) {
-    console.warn('[getTrendingManga] Falling back to client-side filter. Create composite index:', error);
+    console.warn('[getTrendingManga] Falling back to client-side filter:', error);
     try {
       const allManga = await getAllManga([orderBy('rating', 'desc'), limit(50)]);
       return allManga.filter((m) => m.trending === true).slice(0, 20);
     } catch (err) {
       console.error('Error fetching trending manga:', err);
-      return [];
+      return DEMO_MANGA.filter((m) => m.trending);
     }
   }
 }
 
-// This one only uses orderBy - no composite index needed
 export async function getLatestManga(count = 20): Promise<Manga[]> {
-  return getAllManga([orderBy('createdAt', 'desc'), limit(count)]);
+  const list = await getAllManga([orderBy('createdAt', 'desc'), limit(count)]);
+  return list.slice(0, count);
 }
 
-// ✅ Uses proper Firestore where() + orderBy() with composite index.
-// Composite index required:
-//   Collection: manga | Fields: language (Ascending), updatedAt (Descending)
 export async function getMangaByLanguage(language: 'en' | 'bn', count = 10): Promise<Manga[]> {
   try {
     const allManga = await getAllManga([
@@ -224,15 +304,15 @@ export async function getMangaByLanguage(language: 'en' | 'bn', count = 10): Pro
       orderBy('updatedAt', 'desc'),
       limit(count),
     ]);
-    return allManga;
+    return allManga.filter((m) => m.language === language).slice(0, count);
   } catch (error) {
-    console.warn('[getMangaByLanguage] Falling back to client-side filter. Create composite index:', error);
+    console.warn('[getMangaByLanguage] Falling back to client-side filter:', error);
     try {
       const allManga = await getAllManga([orderBy('updatedAt', 'desc'), limit(50)]);
       return allManga.filter((m) => m.language === language).slice(0, count);
     } catch (err) {
       console.error('Error fetching manga by language:', err);
-      return [];
+      return DEMO_MANGA.filter((m) => m.language === language).slice(0, count);
     }
   }
 }
@@ -278,22 +358,21 @@ export async function addManga(data: Omit<Manga, 'id'>): Promise<string> {
     });
     const docRef = await addDoc(collection(db, 'manga'), cleanData);
     return docRef.id;
-  } catch (error: any) {
-    console.error('Firestore addManga error:', {
-      code: error?.code,
-      message: error?.message,
-      name: error?.name,
-    });
-    throw error; // Re-throw so caller can handle
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'manga');
   }
 }
 
 export async function updateManga(id: string, data: Partial<Manga>): Promise<void> {
-  const cleanData = removeUndefined({
-    ...data,
-    updatedAt: Timestamp.now(),
-  });
-  await updateDoc(doc(getFirebaseDb(), 'manga', id), cleanData);
+  try {
+    const cleanData = removeUndefined({
+      ...data,
+      updatedAt: Timestamp.now(),
+    });
+    await updateDoc(doc(getFirebaseDb(), 'manga', id), cleanData);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `manga/${id}`);
+  }
 }
 
 export async function deleteManga(id: string): Promise<void> {
@@ -308,6 +387,10 @@ export async function deleteManga(id: string): Promise<void> {
 // ─── Chapter CRUD ──────────────────────────────────────────
 
 export async function getChaptersByMangaId(mangaId: string): Promise<Chapter[]> {
+  if (mangaId.startsWith('demo-')) {
+    const slug = mangaId.replace(/^demo-/, '');
+    return DEMO_CHAPTERS_BY_SLUG[slug] || [];
+  }
   try {
     const q = query(
       collection(getFirebaseDb(), 'manga', mangaId, 'chapters'),
@@ -358,10 +441,13 @@ export async function getAllGenres(): Promise<Genre[]> {
   try {
     const q = query(collection(getFirebaseDb(), 'genres'), orderBy('name', 'asc'));
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Genre);
+    if (!snap.empty) {
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Genre);
+    }
+    return DEMO_GENRES;
   } catch (error) {
     console.error('Error fetching genres:', error);
-    return [];
+    return DEMO_GENRES;
   }
 }
 
@@ -369,11 +455,14 @@ export async function getGenreBySlug(slug: string): Promise<Genre | null> {
   try {
     const q = query(collection(getFirebaseDb(), 'genres'), where('slug', '==', slug), limit(1));
     const snap = await getDocs(q);
-    if (snap.empty) return null;
-    return { id: snap.docs[0].id, ...snap.docs[0].data() } as Genre;
+    if (!snap.empty) {
+      return { id: snap.docs[0].id, ...snap.docs[0].data() } as Genre;
+    }
+    const baseSnap = await getDocs(query(collection(getFirebaseDb(), 'genres'), limit(1)));
+    return baseSnap.empty ? DEMO_GENRES.find((g) => g.slug === slug) || null : null;
   } catch (error) {
     console.error('Error fetching genre by slug:', error);
-    return null;
+    return DEMO_GENRES.find((g) => g.slug === slug) || null;
   }
 }
 
@@ -476,15 +565,22 @@ export async function getBookmarkedManga(userId: string): Promise<Manga[]> {
 // ─── Stats ─────────────────────────────────────────────────
 
 export async function getStats() {
-  const allManga = await getAllManga([orderBy('createdAt', 'desc')]);
-  return {
-    total: allManga.length,
-    en: allManga.filter((m) => m.language === 'en').length,
-    bn: allManga.filter((m) => m.language === 'bn').length,
-    ongoing: allManga.filter((m) => m.status === 'ongoing').length,
-    completed: allManga.filter((m) => m.status === 'completed').length,
-    recent: allManga.slice(0, 5),
-  };
+  try {
+    const q = query(collection(getFirebaseDb(), 'manga'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    const allManga = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Manga);
+    return {
+      total: allManga.length,
+      en: allManga.filter((m) => m.language === 'en').length,
+      bn: allManga.filter((m) => m.language === 'bn').length,
+      ongoing: allManga.filter((m) => m.status === 'ongoing').length,
+      completed: allManga.filter((m) => m.status === 'completed').length,
+      recent: allManga.slice(0, 5),
+    };
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
+    return { total: 0, en: 0, bn: 0, ongoing: 0, completed: 0, recent: [] as Manga[] };
+  }
 }
 
 // ─── Announcements / Blog ──────────────────────────────────
@@ -502,98 +598,136 @@ export async function getAllAnnouncements(): Promise<Announcement[]> {
   try {
     const q = query(collection(getFirebaseDb(), 'announcements'), orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Announcement);
+    if (!snap.empty) {
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Announcement);
+    }
+    return DEMO_ANNOUNCEMENTS;
   } catch (error) {
     console.error('Error fetching announcements:', error);
-    return [];
+    return DEMO_ANNOUNCEMENTS;
   }
 }
 
 export async function getAnnouncementById(id: string): Promise<Announcement | null> {
   try {
     const snap = await getDoc(doc(getFirebaseDb(), 'announcements', id));
-    if (!snap.exists()) return null;
-    return { id: snap.id, ...snap.data() } as Announcement;
+    if (snap.exists()) {
+      return { id: snap.id, ...snap.data() } as Announcement;
+    }
+    const baseSnap = await getDocs(query(collection(getFirebaseDb(), 'announcements'), limit(1)));
+    return baseSnap.empty ? DEMO_ANNOUNCEMENTS.find((a) => a.id === id) || null : null;
   } catch (error) {
     console.error('Error fetching announcement:', error);
-    return null;
+    return DEMO_ANNOUNCEMENTS.find((a) => a.id === id) || null;
   }
 }
 
 export async function updateAnnouncement(id: string, data: Partial<Announcement>): Promise<void> {
-  await updateDoc(doc(getFirebaseDb(), 'announcements', id), {
-    ...data,
-    updatedAt: Timestamp.now(),
-  });
+  try {
+    await updateDoc(doc(getFirebaseDb(), 'announcements', id), removeUndefined({
+      ...data,
+      updatedAt: Timestamp.now(),
+    }));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `announcements/${id}`);
+  }
 }
 
 export async function deleteAnnouncement(id: string): Promise<void> {
-  await deleteDoc(doc(getFirebaseDb(), 'announcements', id));
+  try {
+    await deleteDoc(doc(getFirebaseDb(), 'announcements', id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `announcements/${id}`);
+  }
 }
 
 export async function getLatestAnnouncements(count = 5): Promise<Announcement[]> {
   try {
     const q = query(collection(getFirebaseDb(), 'announcements'), orderBy('createdAt', 'desc'), limit(count));
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Announcement);
+    if (!snap.empty) {
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Announcement);
+    }
+    return DEMO_ANNOUNCEMENTS.slice(0, count);
   } catch (error) {
     console.error('Error fetching latest announcements:', error);
-    return [];
+    return DEMO_ANNOUNCEMENTS.slice(0, count);
   }
 }
 
 // ─── Notifications ─────────────────────────────────────────
 
 export async function addNotification(data: Omit<Notification, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(getFirebaseDb(), 'notifications'), removeUndefined({
-    ...data,
-    createdAt: Timestamp.now(),
-  }));
-  return docRef.id;
+  try {
+    const docRef = await addDoc(collection(getFirebaseDb(), 'notifications'), removeUndefined({
+      ...data,
+      createdAt: Timestamp.now(),
+    }));
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'notifications');
+  }
 }
 
 export async function getNotifications(count = 20): Promise<Notification[]> {
   try {
     const q = query(collection(getFirebaseDb(), 'notifications'), orderBy('createdAt', 'desc'), limit(count));
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Notification);
+    if (!snap.empty) {
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Notification);
+    }
+    return DEMO_NOTIFICATIONS.slice(0, count);
   } catch (error) {
     console.error('Error fetching notifications:', error);
-    return [];
+    return DEMO_NOTIFICATIONS.slice(0, count);
   }
 }
 
 export async function deleteNotification(id: string): Promise<void> {
-  await deleteDoc(doc(getFirebaseDb(), 'notifications', id));
+  try {
+    await deleteDoc(doc(getFirebaseDb(), 'notifications', id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `notifications/${id}`);
+  }
 }
 
 // ─── Upcoming Releases ─────────────────────────────────────
 
 export async function addUpcomingRelease(data: Omit<UpcomingRelease, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(getFirebaseDb(), 'upcomingReleases'), {
-    ...data,
-    createdAt: Timestamp.now(),
-  });
-  return docRef.id;
+  try {
+    const docRef = await addDoc(collection(getFirebaseDb(), 'upcomingReleases'), removeUndefined({
+      ...data,
+      createdAt: Timestamp.now(),
+    }));
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'upcomingReleases');
+  }
 }
 
 export async function getUpcomingReleases(): Promise<UpcomingRelease[]> {
   try {
-    // Fetch all ordered by releaseDate, filter client-side for future dates
     const q = query(collection(getFirebaseDb(), 'upcomingReleases'), orderBy('releaseDate', 'asc'), limit(20));
     const snap = await getDocs(q);
+    if (snap.empty) {
+      return getDemoUpcomingReleases();
+    }
     const now = Date.now();
     return snap.docs
       .map((d) => ({ id: d.id, ...d.data() }) as UpcomingRelease)
       .filter((r) => r.releaseDate.toMillis() > now);
   } catch (error) {
     console.error('Error fetching upcoming releases:', error);
-    return [];
+    return getDemoUpcomingReleases();
   }
 }
 
 export async function deleteUpcomingRelease(id: string): Promise<void> {
-  await deleteDoc(doc(getFirebaseDb(), 'upcomingReleases', id));
+  try {
+    await deleteDoc(doc(getFirebaseDb(), 'upcomingReleases', id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `upcomingReleases/${id}`);
+  }
 }
 
 export async function getAllUpcomingReleases(): Promise<UpcomingRelease[]> {
@@ -610,22 +744,29 @@ export async function getAllUpcomingReleases(): Promise<UpcomingRelease[]> {
 // ─── User Requests ─────────────────────────────────────────
 
 export async function addRequest(data: Omit<MangaRequest, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(getFirebaseDb(), 'requests'), {
-    ...data,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-  });
-  return docRef.id;
+  try {
+    const docRef = await addDoc(collection(getFirebaseDb(), 'requests'), removeUndefined({
+      ...data,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'requests');
+  }
 }
 
 export async function getAllRequests(): Promise<MangaRequest[]> {
   try {
     const q = query(collection(getFirebaseDb(), 'requests'), orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as MangaRequest);
+    if (!snap.empty) {
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as MangaRequest);
+    }
+    return DEMO_REQUESTS;
   } catch (error) {
     console.error('Error fetching requests:', error);
-    return [];
+    return DEMO_REQUESTS;
   }
 }
 

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const res = await fetch(url, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'ISKULTRIP-SCANS/1.0',
+        'User-Agent': 'MangaBD/1.0',
       },
     });
 
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         const retryRes = await fetch(url, {
           headers: {
             'Accept': 'application/json',
-            'User-Agent': 'ISKULTRIP-SCANS/1.0',
+            'User-Agent': 'MangaBD/1.0',
           },
         });
         if (!retryRes.ok) {

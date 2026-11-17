@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, BookOpen, Plus, Trash2, ExternalLink, X, FileText } from 'lucide-react';
+import { Search, BookOpen, Plus, Trash2, ExternalLink, X, FileText, Send } from 'lucide-react';
 import {
   getAllManga,
   getChaptersByMangaId,
@@ -15,12 +15,14 @@ import {
 import { useToast } from '@/components/ui/Toast';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm';
+import { getFirebaseAuth } from '@/lib/firebase';
+import { SITE_CONFIG } from '@/lib/config';
+import { FALLBACK_COVER_ASSET } from '@/lib/assets';
 import { Timestamp } from 'firebase/firestore';
 
 export default function AdminChaptersPage() {
   const { showToast } = useToast();
 
-  // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Manga[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -28,24 +30,32 @@ export default function AdminChaptersPage() {
   const searchRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Selected manga state
   const [selectedManga, setSelectedManga] = useState<Manga | null>(null);
-
-  // Chapters state
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [chaptersLoading, setChaptersLoading] = useState(false);
 
-  // Add chapter form
   const [chapterNumber, setChapterNumber] = useState('');
   const [chapterTitle, setChapterTitle] = useState('');
   const [chapterLink, setChapterLink] = useState('');
   const [adding, setAdding] = useState(false);
+  const [telegramConfigured, setTelegramConfigured] = useState(false);
+  const [broadcastTelegram, setBroadcastTelegram] = useState(false);
 
-  // Delete chapter
+  useEffect(() => {
+    fetch('/api/telegram/notify')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.configured) {
+          setTelegramConfigured(true);
+          setBroadcastTelegram(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const [deleteTarget, setDeleteTarget] = useState<Chapter | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Search manga with debounce
   const searchManga = useCallback(async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -81,7 +91,6 @@ export default function AdminChaptersPage() {
     };
   }, [searchQuery, searchManga]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -92,7 +101,6 @@ export default function AdminChaptersPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch chapters when manga is selected
   const fetchChapters = async (mangaId: string) => {
     setChaptersLoading(true);
     try {
@@ -137,21 +145,45 @@ export default function AdminChaptersPage() {
         createdAt: Timestamp.now(),
       });
 
-      // Create notification for new chapter
       try {
         const title = selectedManga.title;
-        const titleBn = selectedManga.titleBn;
         await addNotification({
           title: `New Chapter: ${title} Ch.${chapterNumber}`,
-          titleBn: titleBn ? `নতুন চ্যাপ্টার: ${titleBn} অধ্যায় ${chapterNumber}` : undefined,
           message: `Chapter ${chapterNumber} of ${title} is now available!`,
-          messageBn: titleBn ? `${titleBn} এর অধ্যায় ${chapterNumber} এখন উপলব্ধ!` : undefined,
           type: 'new_chapter',
           mangaSlug: selectedManga.slug,
           createdAt: Timestamp.now(),
         });
       } catch (notifError) {
         console.error('Failed to create notification:', notifError);
+      }
+
+      if (broadcastTelegram && telegramConfigured) {
+        try {
+          const idToken = await getFirebaseAuth().currentUser?.getIdToken();
+          const tgRes = await fetch('/api/telegram/notify', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+            },
+            body: JSON.stringify({
+              tag: 'NEW CHAPTER',
+              title: `${selectedManga.title} — Chapter ${chapterNumber}`,
+              message: chapterTitle
+                ? `${chapterTitle}\nNow available on MangaBD!`
+                : `Chapter ${chapterNumber} is now available on MangaBD!`,
+              url: `${SITE_CONFIG.url}/manga/${selectedManga.slug}`,
+              coverImage: selectedManga.coverImage,
+              buttonLabel: 'Read Chapter on MangaBD',
+            }),
+          });
+          if (!tgRes.ok) {
+            showToast('Chapter added, but Telegram broadcast failed.', 'error');
+          }
+        } catch {
+          showToast('Chapter added, but Telegram broadcast failed.', 'error');
+        }
       }
 
       showToast(`Chapter ${chapterNumber} added!`, 'success');
@@ -183,45 +215,36 @@ export default function AdminChaptersPage() {
     }
   };
 
-  const inputClass = 'w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all';
-  const inputStyle = {
-    background: 'var(--bg-primary)',
-    border: '1px solid var(--border-color)',
-    color: 'var(--text-primary)',
-  };
+  const inputClass =
+    'w-full px-3.5 py-2.5 rounded-lg text-sm outline-none border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:border-[var(--accent)] transition-colors';
 
   return (
     <div>
-      <AdminHeader title="Post Chapter" subtitle="Add chapters to manga" />
+      <AdminHeader title="Post Chapter" subtitle="Index new external chapters and optionally broadcast to Telegram" />
 
       {/* Manga Search */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl p-6 mb-6"
-        style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-        }}
+        className="rounded-xl p-5 sm:p-6 mb-6 border border-[var(--border-color)] bg-[var(--bg-secondary)]"
       >
-        <h3 className="font-['Bebas_Neue'] text-lg tracking-wide text-[var(--text-primary)] mb-4 flex items-center gap-2">
-          <Search size={18} className="text-[var(--accent)]" />
-          Select Manga
+        <h3 className="font-display text-lg font-bold tracking-tight text-[var(--text-primary)] mb-4 flex items-center gap-2">
+          <Search size={17} className="text-[var(--accent)]" />
+          Select Series
         </h3>
 
         <div className="relative" ref={searchRef}>
           <div className="relative">
             <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+              size={15}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
             />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search manga by title..."
-              className={`${inputClass} pl-9 pr-9`}
-              style={inputStyle}
+              className={`${inputClass} pl-10 pr-10`}
               disabled={!!selectedManga}
             />
             {selectedManga ? (
@@ -238,38 +261,28 @@ export default function AdminChaptersPage() {
             ) : null}
           </div>
 
-          {/* Search Dropdown */}
           <AnimatePresence>
             {showDropdown && searchResults.length > 0 && !selectedManga && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-50 max-h-64 overflow-y-auto"
-                style={{
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                  boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
-                }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18 }}
+                className="absolute top-full left-0 right-0 mt-1.5 rounded-xl overflow-hidden z-50 max-h-64 overflow-y-auto border border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-xl"
               >
                 {searchResults.map((manga) => (
                   <button
                     key={manga.id}
                     onClick={() => handleSelectManga(manga)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--accent-glow)] transition-colors"
-                    style={{ borderBottom: '1px solid var(--border-color)' }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--bg-subtle)] transition-colors border-b last:border-0 border-[var(--border-color)]"
                   >
-                    <div
-                      className="w-10 h-14 rounded overflow-hidden flex-shrink-0"
-                      style={{ background: 'var(--bg-primary)' }}
-                    >
+                    <div className="w-10 h-14 rounded overflow-hidden flex-shrink-0 bg-[var(--bg-subtle)]">
                       <img
-                        src={manga.coverImage || '/no-cover.png'}
+                        src={manga.coverImage || FALLBACK_COVER_ASSET.src}
                         alt={manga.title}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/no-cover.png';
+                          (e.target as HTMLImageElement).src = FALLBACK_COVER_ASSET.src;
                         }}
                       />
                     </div>
@@ -282,7 +295,7 @@ export default function AdminChaptersPage() {
                           {manga.titleBn}
                         </p>
                       )}
-                      <p className="text-xs text-[var(--text-muted)]">
+                      <p className="font-mono-num text-xs text-[var(--text-muted)]">
                         Ch. {manga.totalChapters} · {manga.language.toUpperCase()}
                       </p>
                     </div>
@@ -293,47 +306,29 @@ export default function AdminChaptersPage() {
           </AnimatePresence>
 
           {showDropdown && searchResults.length === 0 && searchQuery.trim() && !isSearching && !selectedManga && (
-            <div
-              className="absolute top-full left-0 right-0 mt-1 rounded-xl p-4 text-center z-50"
-              style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-color)',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
-              }}
-            >
+            <div className="absolute top-full left-0 right-0 mt-1.5 rounded-xl p-4 text-center z-50 border border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-xl">
               <p className="text-sm text-[var(--text-muted)]">No manga found</p>
             </div>
           )}
         </div>
 
-        {/* Selected manga info */}
         <AnimatePresence>
           {selectedManga && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.25 }}
               className="overflow-hidden"
             >
-              <div
-                className="mt-4 flex items-center gap-4 p-4 rounded-xl"
-                style={{
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-color)',
-                  boxShadow: '0 0 20px var(--accent-glow)',
-                }}
-              >
-                <div
-                  className="w-16 h-22 rounded-lg overflow-hidden flex-shrink-0"
-                  style={{ aspectRatio: '3/4' }}
-                >
+              <div className="mt-4 flex items-center gap-4 p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)]">
+                <div className="w-14 flex-shrink-0 rounded-md overflow-hidden border border-[var(--border-color)]" style={{ aspectRatio: '3/4' }}>
                   <img
-                    src={selectedManga.coverImage || '/no-cover.png'}
+                    src={selectedManga.coverImage || FALLBACK_COVER_ASSET.src}
                     alt={selectedManga.title}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/no-cover.png';
+                      (e.target as HTMLImageElement).src = FALLBACK_COVER_ASSET.src;
                     }}
                   />
                 </div>
@@ -349,8 +344,8 @@ export default function AdminChaptersPage() {
                   <p className="text-xs text-[var(--text-muted)] mt-1">
                     {selectedManga.genres.slice(0, 3).join(', ')} · {selectedManga.status}
                   </p>
-                  <p className="text-xs text-[var(--accent)] mt-0.5">
-                    {selectedManga.totalChapters} chapters
+                  <p className="font-mono-num text-xs font-medium text-[var(--accent)] mt-0.5">
+                    {selectedManga.totalChapters} chapters indexed
                   </p>
                 </div>
               </div>
@@ -359,29 +354,25 @@ export default function AdminChaptersPage() {
         </AnimatePresence>
       </motion.div>
 
-      {/* Add Chapter Form - shown only when manga is selected */}
+      {/* Add Chapter Form */}
       <AnimatePresence>
         {selectedManga && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="rounded-xl p-6 mb-6"
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-            }}
+            exit={{ opacity: 0, y: 14 }}
+            transition={{ duration: 0.25 }}
+            className="rounded-xl p-5 sm:p-6 mb-6 border border-[var(--border-color)] bg-[var(--bg-secondary)]"
           >
-            <h3 className="font-['Bebas_Neue'] text-lg tracking-wide text-[var(--text-primary)] mb-4 flex items-center gap-2">
-              <Plus size={18} className="text-[var(--accent)]" />
+            <h3 className="font-display text-lg font-bold tracking-tight text-[var(--text-primary)] mb-4 flex items-center gap-2">
+              <Plus size={17} className="text-[var(--accent)]" />
               Add New Chapter
             </h3>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">
                     Chapter Number *
                   </label>
                   <input
@@ -389,13 +380,12 @@ export default function AdminChaptersPage() {
                     value={chapterNumber}
                     onChange={(e) => setChapterNumber(e.target.value)}
                     placeholder="1"
-                    className={inputClass}
-                    style={inputStyle}
+                    className={`${inputClass} font-mono-num`}
                     min="1"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">
                     Chapter Title
                   </label>
                   <input
@@ -404,12 +394,11 @@ export default function AdminChaptersPage() {
                     onChange={(e) => setChapterTitle(e.target.value)}
                     placeholder="Chapter Title (optional)"
                     className={inputClass}
-                    style={inputStyle}
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs text-[var(--text-muted)] mb-1 block">
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">
                   External Read Link *
                 </label>
                 <input
@@ -418,42 +407,54 @@ export default function AdminChaptersPage() {
                   onChange={(e) => setChapterLink(e.target.value)}
                   placeholder="https://external-site.com/chapter/1"
                   className={inputClass}
-                  style={inputStyle}
                 />
               </div>
-              <div className="flex gap-2 pt-1">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <label className="flex items-center gap-2.5 p-3.5 rounded-xl cursor-pointer text-xs border border-sky-500/25 bg-sky-500/10">
+                <input
+                  type="checkbox"
+                  checked={broadcastTelegram}
+                  disabled={!telegramConfigured}
+                  onChange={(e) => setBroadcastTelegram(e.target.checked)}
+                  className="w-4 h-4 rounded accent-[#0088cc] disabled:opacity-40"
+                />
+                <Send size={14} className="text-sky-500 flex-shrink-0" />
+                <span className="text-[var(--text-primary)] font-medium">
+                  Broadcast chapter release to Telegram Channel
+                  {!telegramConfigured && (
+                    <span className="text-[var(--text-muted)] font-normal ml-1">
+                      (configure TELEGRAM_BOT_TOKEN &amp; TELEGRAM_CHAT_ID on server to enable)
+                    </span>
+                  )}
+                </span>
+              </label>
+
+              <div className="pt-1">
+                <button
                   onClick={handleAddChapter}
                   disabled={adding || !chapterNumber || !chapterLink}
-                  className="btn-accent text-xs py-2.5 px-5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-accent text-xs py-2.5 px-5"
                 >
                   {adding ? 'Adding...' : 'Add Chapter'}
-                </motion.button>
+                </button>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Existing Chapters - shown only when manga is selected */}
+      {/* Existing Chapters */}
       <AnimatePresence>
         {selectedManga && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="rounded-xl p-6"
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-            }}
+            exit={{ opacity: 0, y: 14 }}
+            transition={{ duration: 0.25 }}
+            className="rounded-xl p-5 sm:p-6 border border-[var(--border-color)] bg-[var(--bg-secondary)]"
           >
-            <h3 className="font-['Bebas_Neue'] text-lg tracking-wide text-[var(--text-primary)] mb-4 flex items-center gap-2">
-              <FileText size={18} className="text-[var(--accent)]" />
-              Existing Chapters ({chapters.length})
+            <h3 className="font-display text-lg font-bold tracking-tight text-[var(--text-primary)] mb-4 flex items-center gap-2">
+              <FileText size={17} className="text-[var(--accent)]" />
+              Existing Chapters <span className="font-mono-num text-sm font-normal text-[var(--text-muted)]">({chapters.length})</span>
             </h3>
 
             {chaptersLoading ? (
@@ -467,21 +468,14 @@ export default function AdminChaptersPage() {
                 No chapters yet. Add the first chapter above.
               </div>
             ) : (
-              <div className="space-y-1 max-h-96 overflow-y-auto">
-                {chapters.map((chapter, index) => (
-                  <motion.div
+              <div className="rounded-xl border border-[var(--border-color)] divide-y divide-[var(--border-color)] max-h-96 overflow-y-auto">
+                {chapters.map((chapter) => (
+                  <div
                     key={chapter.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-[var(--accent-glow)] transition-all group"
-                    style={{ border: '1px solid var(--border-color)' }}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-[var(--bg-subtle)] transition-colors group"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <span
-                        className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
-                        style={{ background: 'var(--accent-glow)', color: 'var(--accent)' }}
-                      >
+                      <span className="font-mono-num flex-shrink-0 w-9 h-8 rounded-md flex items-center justify-center text-xs font-bold bg-[var(--accent-glow)] text-[var(--accent)]">
                         {chapter.chapterNumber}
                       </span>
                       <div className="min-w-0">
@@ -498,18 +492,18 @@ export default function AdminChaptersPage() {
                         href={chapter.readLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--accent)] transition-all"
+                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                       >
                         <ExternalLink size={14} />
                       </a>
                       <button
                         onClick={() => setDeleteTarget(chapter)}
-                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 transition-all"
+                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-500 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             )}
@@ -517,31 +511,26 @@ export default function AdminChaptersPage() {
         )}
       </AnimatePresence>
 
-      {/* Empty state when no manga is selected */}
+      {/* Empty state */}
       <AnimatePresence>
         {!selectedManga && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="rounded-xl p-12 text-center"
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-            }}
+            className="rounded-xl p-12 text-center border border-[var(--border-color)] bg-[var(--bg-secondary)]"
           >
-            <BookOpen size={48} className="mx-auto text-[var(--text-muted)] mb-4" />
-            <h3 className="font-['Bebas_Neue'] text-xl tracking-wide text-[var(--text-secondary)] mb-2">
+            <BookOpen size={40} className="mx-auto text-[var(--text-muted)] mb-3" strokeWidth={1.6} />
+            <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mb-1">
               No Manga Selected
             </h3>
             <p className="text-sm text-[var(--text-muted)]">
-              Search and select a manga above to manage its chapters
+              Search and select a series above to manage or publish chapters.
             </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Delete Confirmation */}
       <DeleteConfirm
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}

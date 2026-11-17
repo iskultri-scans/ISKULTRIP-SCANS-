@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Edit3, Megaphone, Calendar, Zap, X } from 'lucide-react';
+import { Plus, Trash2, Edit3, Megaphone, X } from 'lucide-react';
 import {
   getAllAnnouncements,
   addAnnouncement,
@@ -16,9 +16,21 @@ import { DeleteConfirm } from '@/components/admin/DeleteConfirm';
 import { Timestamp } from 'firebase/firestore';
 
 const typeOptions = [
-  { value: 'announcement', label: '📢 Announcement', color: '#00d4ff' },
-  { value: 'upcoming', label: '📅 Upcoming', color: '#f59e0b' },
-  { value: 'update', label: '🔥 New Update', color: '#10b981' },
+  {
+    value: 'announcement',
+    label: 'Announcement',
+    badgeClass: 'text-[var(--accent)] bg-[var(--accent-glow)] border-[var(--border-color)]',
+  },
+  {
+    value: 'upcoming',
+    label: 'Upcoming',
+    badgeClass: 'text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/20',
+  },
+  {
+    value: 'update',
+    label: 'New Release',
+    badgeClass: 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+  },
 ];
 
 const defaultForm = {
@@ -128,30 +140,25 @@ export default function AdminBlogPage() {
     }
   };
 
-  const inputClass = 'w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all';
-  const inputStyle = {
-    background: 'var(--bg-primary)',
-    border: '1px solid var(--border-color)',
-    color: 'var(--text-primary)',
-  };
+  const inputClass =
+    'w-full px-3.5 py-2.5 rounded-lg text-sm outline-none border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:border-[var(--accent)] transition-colors';
 
   return (
     <div>
       <AdminHeader
         title="Blog & Announcements"
-        subtitle="ব্লগ ও ঘোষণা পরিচালনা করুন"
+        subtitle="Manage journal dispatches and site-wide announcements"
         actions={
           <button
             onClick={() => { resetForm(); setShowForm(!showForm); }}
-            className="btn-accent flex items-center gap-2 text-sm"
+            className="btn-accent inline-flex items-center gap-2 text-sm"
           >
-            {showForm ? <X size={16} /> : <Plus size={16} />}
+            {showForm ? <X size={15} /> : <Plus size={15} />}
             {showForm ? 'Cancel' : 'New Post'}
           </button>
         }
       />
 
-      {/* Form */}
       <AnimatePresence>
         {showForm && (
           <motion.div
@@ -162,73 +169,64 @@ export default function AdminBlogPage() {
           >
             <form
               onSubmit={handleSubmit}
-              className="rounded-xl p-4 sm:p-6 space-y-4"
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-              }}
+              className="rounded-xl p-5 sm:p-6 space-y-4 border border-[var(--border-color)] bg-[var(--bg-secondary)]"
             >
-              <h3 className="font-['Bebas_Neue'] text-lg tracking-wide text-[var(--text-primary)]">
-                {editingId ? 'Edit Post' : 'New Announcement'}
+              <h3 className="font-display text-lg font-bold tracking-tight text-[var(--text-primary)]">
+                {editingId ? 'Edit Post' : 'New Dispatch'}
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">Title (EN) *</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Title (EN) *</label>
                   <input
                     value={form.title}
                     onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
                     required
                     className={inputClass}
-                    style={inputStyle}
                     placeholder="Post title..."
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">Title (BN)</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Title (Alternate / BN)</label>
                   <input
                     value={form.titleBn}
                     onChange={(e) => setForm((p) => ({ ...p, titleBn: e.target.value }))}
                     className={inputClass}
-                    style={inputStyle}
-                    placeholder="পোস্টের শিরোনাম..."
+                    placeholder="Optional alternate title..."
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-[var(--text-muted)] mb-1 block">Content (EN) *</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Content (EN) *</label>
                 <textarea
                   value={form.content}
                   onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))}
                   required
                   rows={4}
                   className={inputClass}
-                  style={inputStyle}
                   placeholder="Write your post content..."
                 />
               </div>
 
               <div>
-                <label className="text-xs text-[var(--text-muted)] mb-1 block">Content (BN)</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Content (Alternate / BN)</label>
                 <textarea
                   value={form.contentBn}
                   onChange={(e) => setForm((p) => ({ ...p, contentBn: e.target.value }))}
                   rows={4}
                   className={inputClass}
-                  style={inputStyle}
-                  placeholder="বাংলায় পোস্টের বিষয়বস্তু..."
+                  placeholder="Optional alternate language content..."
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">Type</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Type</label>
                   <select
                     value={form.type}
                     onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
                     className={inputClass}
-                    style={inputStyle}
                   >
                     {typeOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -236,43 +234,38 @@ export default function AdminBlogPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-[var(--text-muted)] mb-1 block">Cover Image URL</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Cover Image URL</label>
                   <input
                     value={form.coverImage}
                     onChange={(e) => setForm((p) => ({ ...p, coverImage: e.target.value }))}
                     className={inputClass}
-                    style={inputStyle}
                     placeholder="https://..."
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-[var(--text-muted)] mb-1 block">Related Manga ID (optional)</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1.5 block">Related Manga ID (optional)</label>
                 <input
                   value={form.mangaId}
                   onChange={(e) => setForm((p) => ({ ...p, mangaId: e.target.value }))}
                   className={inputClass}
-                  style={inputStyle}
                   placeholder="Firestore manga document ID"
                 />
               </div>
 
               <div className="flex gap-2">
-                <motion.button
+                <button
                   type="submit"
                   disabled={submitting}
-                  whileHover={{ scale: submitting ? 1 : 1.02 }}
-                  whileTap={{ scale: submitting ? 1 : 0.98 }}
                   className="btn-accent text-xs py-2.5 px-5"
                 >
                   {submitting ? 'Saving...' : editingId ? 'Update Post' : 'Create Post'}
-                </motion.button>
+                </button>
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-4 py-2.5 rounded-lg text-xs text-[var(--text-secondary)] hover:bg-[var(--accent-glow)] transition-colors"
-                  style={{ border: '1px solid var(--border-color)' }}
+                  className="px-4 py-2.5 rounded-lg text-xs border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   Cancel
                 </button>
@@ -290,33 +283,28 @@ export default function AdminBlogPage() {
           ))}
         </div>
       ) : announcements.length === 0 ? (
-        <div className="text-center py-12">
-          <Megaphone size={40} className="mx-auto text-[var(--text-muted)] mb-3" />
+        <div className="text-center py-12 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)]">
+          <Megaphone size={36} className="mx-auto text-[var(--text-muted)] mb-3" />
           <p className="text-[var(--text-muted)] text-sm">No announcements yet. Create your first post!</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {announcements.map((announcement, index) => {
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] divide-y divide-[var(--border-color)]">
+          {announcements.map((announcement) => {
             const typeOpt = typeOptions.find((t) => t.value === announcement.type) || typeOptions[0];
             return (
-              <motion.div
+              <div
                 key={announcement.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.03 }}
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-[var(--accent-glow)] transition-all group"
-                style={{ border: '1px solid var(--border-color)' }}
+                className="flex items-center justify-between px-4 py-3.5 hover:bg-[var(--bg-subtle)] transition-colors group"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <span
-                    className="flex-shrink-0 px-2 py-1 rounded-md text-[10px] font-bold uppercase"
-                    style={{ background: `${typeOpt.color}20`, color: typeOpt.color }}
+                    className={`flex-shrink-0 px-2.5 py-0.5 rounded-md border text-[10px] font-semibold uppercase tracking-wider ${typeOpt.badgeClass}`}
                   >
                     {typeOpt.label}
                   </span>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-[var(--text-primary)] truncate">
-                      {announcement.titleBn || announcement.title}
+                      {announcement.title || announcement.titleBn}
                     </p>
                     <p className="text-xs text-[var(--text-muted)] truncate">
                       {announcement.content.slice(0, 80)}...
@@ -326,18 +314,18 @@ export default function AdminBlogPage() {
                 <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
                   <button
                     onClick={() => handleEdit(announcement)}
-                    className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--accent)] transition-all"
+                    className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                   >
                     <Edit3 size={14} />
                   </button>
                   <button
                     onClick={() => setDeleteTarget(announcement)}
-                    className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 transition-all"
+                    className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-500 transition-colors"
                   >
                     <Trash2 size={14} />
                   </button>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>

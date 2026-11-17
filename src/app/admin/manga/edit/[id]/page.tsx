@@ -39,7 +39,6 @@ export default function EditMangaPage() {
 
     setLoading(true);
     try {
-      // Force-refresh the auth token before writing to Firestore
       const auth = getFirebaseAuth();
       const currentUser = auth.currentUser;
       if (currentUser) {
@@ -66,9 +65,9 @@ export default function EditMangaPage() {
       });
       showToast('Manga updated successfully!', 'success');
       router.push('/admin/manga');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating manga:', error);
-      const errorMsg = error?.message || 'Failed to update manga';
+      const errorMsg = error instanceof Error ? error.message : 'Failed to update manga';
       if (errorMsg.includes('permission-denied') || errorMsg.includes('PERMISSION_DENIED')) {
         showToast('Permission denied — make sure you are logged in as admin', 'error');
       } else {
@@ -93,7 +92,7 @@ export default function EditMangaPage() {
   if (!manga) {
     return (
       <div className="text-center py-12 text-[var(--text-muted)]">
-        <p>Manga not found.</p>
+        <p className="text-sm">Manga not found.</p>
       </div>
     );
   }
@@ -111,8 +110,7 @@ export default function EditMangaPage() {
         />
       </div>
 
-      {/* Chapter Manager */}
-      <div className="pt-6 border-t" style={{ borderColor: 'var(--border-color)' }}>
+      <div className="pt-6 border-t border-[var(--border-color)]">
         <ChapterManager mangaId={id} mangaTitle={manga.title || ''} />
       </div>
     </div>

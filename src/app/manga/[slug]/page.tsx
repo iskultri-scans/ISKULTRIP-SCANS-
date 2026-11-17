@@ -5,6 +5,7 @@ import { getFirebaseDb } from '@/lib/firebase';
 import { MangaDetailClient } from './MangaDetailClient';
 import type { Manga, Genre, Chapter } from '@/lib/firestore';
 import { getAllGenres, getChaptersByMangaId } from '@/lib/firestore';
+import { getDemoMangaWithChapters } from '@/lib/demo-catalog';
 import { SITE_URL } from '@/lib/site-url';
 
 // Enable dynamic rendering for all manga slugs (fixes 404 on direct URL access)
@@ -16,8 +17,11 @@ export const revalidate = 300;
 // ─── Server-side manga fetch ──────────────────────────────────────
 // Priority: 1) Firebase Client SDK (works with Firestore Security Rules)
 //           2) Firebase Admin SDK (bypasses rules, needs service-account env vars)
+//           3) Curated Demo Catalog fallback (when Firestore manga collection is empty)
 
 async function getMangaForServer(slug: string): Promise<{ manga: Manga; docId: string } | null> {
+  let collectionIsEmpty = false;
+
   // Method 1: Firebase Client SDK
   try {
     const db = getFirebaseDb();
@@ -27,20 +31,22 @@ async function getMangaForServer(slug: string): Promise<{ manga: Manga; docId: s
     if (!snapshot.empty) {
       const docSnap = snapshot.docs[0];
       const manga = { id: docSnap.id, ...docSnap.data() } as Manga;
-      // Fetch chapters in parallel
       const chapters = await getChaptersByMangaId(manga.id);
       manga.chapters = chapters;
       return { manga, docId: docSnap.id };
     }
+
+    const anyDoc = await getDocs(query(collection(db, 'manga'), limit(1)));
+    collectionIsEmpty = anyDoc.empty;
   } catch (error) {
     console.error('[getMangaForServer] Client SDK error:', error);
+    collectionIsEmpty = true;
   }
 
   // Method 2: Firebase Admin SDK fallback
   try {
-    const { getAdminApp } = await import('@/lib/firebase-admin');
-    const adminApp = getAdminApp();
-    const adminDb = adminApp.firestore();
+    const { getAdminFirestore } = await import('@/lib/firebase-admin');
+    const adminDb = getAdminFirestore();
 
     const snapshot = await adminDb
       .collection('manga')
@@ -51,7 +57,6 @@ async function getMangaForServer(slug: string): Promise<{ manga: Manga; docId: s
     if (!snapshot.empty) {
       const docSnap = snapshot.docs[0];
       const manga = { id: docSnap.id, ...docSnap.data() } as Manga;
-      // Fetch chapters via admin SDK
       const chaptersSnap = await adminDb
         .collection('manga')
         .doc(docSnap.id)
@@ -61,8 +66,16 @@ async function getMangaForServer(slug: string): Promise<{ manga: Manga; docId: s
       manga.chapters = chaptersSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Chapter);
       return { manga, docId: docSnap.id };
     }
-  } catch (error) {
-    console.error('[getMangaForServer] Admin SDK error:', error);
+  } catch {
+    // Admin SDK optional when env vars aren't set
+  }
+
+  // Method 3: Demo catalog fallback when Firestore has not been seeded yet
+  if (collectionIsEmpty) {
+    const demo = getDemoMangaWithChapters(slug);
+    if (demo) {
+      return { manga: demo, docId: demo.id };
+    }
   }
 
   return null;
@@ -88,29 +101,29 @@ export async function generateMetadata({
 
   if (!result) {
     return {
-      title: 'Manga Not Found — ISKULTRIP SCANS',
+      title: 'Manga Not Found — MangaBD',
       description: 'The manga you are looking for could not be found.',
     };
   }
 
   const manga = result.manga;
   const title = manga.title || 'Manga';
-  const description = manga.description || `Read ${title} on ISKULTRIP SCANS — বাংলায় মাঙ্গা পড়ুন`;
+  const description = manga.description || `Read ${title} on MangaBD — Discover and track your favorite manga series.`;
   const coverImage = ensureAbsoluteUrl(manga.coverImage);
   const pageUrl = `${SITE_URL}/manga/${slug}`;
   const titleBn = manga.titleBn;
 
   return {
-    title: `${title} — ISKULTRIP SCANS`,
+    title: `${title} — MangaBD`,
     description: description.slice(0, 200),
     alternates: {
       canonical: pageUrl,
     },
     openGraph: {
-      title: titleBn ? `${title} (${titleBn}) — ISKULTRIP SCANS` : `${title} — ISKULTRIP SCANS`,
+      title: titleBn ? `${title} (${titleBn}) — MangaBD` : `${title} — MangaBD`,
       description: description.slice(0, 200),
       url: pageUrl,
-      siteName: 'ISKULTRIP SCANS',
+      siteName: 'MangaBD',
       images: [
         {
           url: coverImage,
@@ -120,7 +133,7 @@ export async function generateMetadata({
         },
       ],
       type: 'article',
-      authors: [manga.author || 'ISKULTRIP SCANS'],
+      authors: [manga.author || 'MangaBD'],
     },
     twitter: {
       card: 'summary_large_image',
@@ -145,9 +158,10 @@ export default async function MangaDetailPage({
     notFound();
   }
 
-  // ✅ Pass manga data as prop — no duplicate fetch on client
+  // ✅ Pass manga data as plain serialized prop — no duplicate fetch on client
   const genres = await getAllGenres().catch(() => [] as Genre[]);
   const genreSlugs = genres.map((g) => ({ name: g.name, slug: g.slug }));
+  const plainManga = JSON.parse(JSON.stringify(result.manga)) as Manga;
 
-  return <MangaDetailClient manga={result.manga} genreSlugs={genreSlugs} />;
+  return <MangaDetailClient manga={plainManga} genreSlugs={genreSlugs} />;
 }

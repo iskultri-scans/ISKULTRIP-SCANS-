@@ -1,11 +1,11 @@
 {
-  "name": "ISKULTRIP SCANS",
-  "short_name": "ISKULTRIP",
-  "description": "Your gateway to manga. Browse, discover, and explore your favorite manga series.",
+  "name": "MangaBD",
+  "short_name": "MangaBD",
+  "description": "Your premier manga directory & reader hub. Browse, discover, and track your favorite manga series.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0f",
-  "theme_color": "#00d4ff",
+  "background_color": "#0B0B0E",
+  "theme_color": "#C81E1E",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
@@ -66,7 +66,7 @@
       "sizes": "1200x630",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "ISKULTRIP SCANS - Browse Manga"
+      "label": "MangaBD - Browse Manga"
     }
   ],
   "shortcuts": [

@@ -22,13 +22,12 @@ export function MangaGrid({
   emptyTitle = 'No manga found',
   emptyMessage = 'Try adjusting your filters or search query.',
 }: MangaGridProps) {
-  // 🔒 Family Mode: filter out adult manga automatically
   const { filterByMode } = useContentMode();
   const visibleManga = filterByMode(manga);
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5">
         {Array.from({ length: 10 }).map((_, i) => (
           <MangaCardSkeleton key={i} />
         ))}
@@ -41,7 +40,7 @@ export function MangaGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5">
       {visibleManga.map((m, i) => (
         <MangaCard key={m.id} manga={m} index={i} showRank={showRank} rank={showRank ? i + 1 : undefined} />
       ))}

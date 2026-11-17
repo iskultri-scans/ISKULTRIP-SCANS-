@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
@@ -7,47 +8,69 @@ import { NotificationProvider } from '@/context/NotificationContext';
 import { ContentModeProvider } from '@/context/ContentModeContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { PWAInstallPrompt } from '@/components/layout/PWAInstallPrompt';
+import { ServiceWorkerManager } from '@/components/layout/ServiceWorkerManager';
 import { SITE_URL } from '@/lib/site-url';
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['500', '600', '700', '800'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['500', '600'],
+  variable: '--font-mono',
+  display: 'swap',
+});
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
   themeColor: [
-    { media: '(prefers-color-scheme: dark)', color: '#0a0a0f' },
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0B0B0E' },
+    { media: '(prefers-color-scheme: light)', color: '#FAF9F6' },
   ],
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'ISKULTRIP SCANS — বাংলায় মাঙ্গা পড়ুন | Read Manga in Bengali',
-  description: 'বাংলা মাঙ্গা অনুবাদের সেরা ঠিকানা। Browse, discover, and read manga in Bengali. ISKULTRIP SCANS by MD MEHADI HASAN.',
+  title: 'MangaBD — Discover, Track & Read Manga',
+  description: 'Your premier manga directory and reader hub. Browse trending series, track chapter releases, and get instant Telegram notifications.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'ISKULTRIP',
+    title: 'MangaBD',
   },
   openGraph: {
-    title: 'ISKULTRIP SCANS — বাংলায় মাঙ্গা পড়ুন',
-    description: 'বাংলা মাঙ্গা অনুবাদের সেরা ঠিকানা। Your gateway to manga in Bengali.',
+    title: 'MangaBD — Discover, Track & Read Manga',
+    description: 'Your premier manga directory and reader hub with instant Telegram chapter alerts.',
     url: SITE_URL,
     type: 'website',
-    siteName: 'ISKULTRIP SCANS',
+    siteName: 'MangaBD',
     images: [
       {
         url: '/og-default.png',
         width: 1200,
         height: 630,
-        alt: 'ISKULTRIP SCANS - Bengali Manga Translations',
+        alt: 'MangaBD - Manga Directory & Reader Hub',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ISKULTRIP SCANS — বাংলায় মাঙ্গা পড়ুন',
-    description: 'বাংলা মাঙ্গা অনুবাদের সেরা ঠিকানা। Read manga in Bengali.',
+    title: 'MangaBD — Discover, Track & Read Manga',
+    description: 'Browse trending manga, track chapters, and receive instant Telegram alerts.',
     images: ['/og-default.png'],
   },
   icons: {
@@ -67,28 +90,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="bn" className="dark" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
-          rel="stylesheet"
-        />
-        {/* PWA: Register service worker */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function() {});
-                });
-              }
-            `,
-          }}
-        />
-      </head>
-      <body className="min-h-screen flex flex-col" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <html
+      lang="en"
+      className={`dark ${outfit.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-screen flex flex-col font-sans antialiased">
+        <ServiceWorkerManager />
         <ThemeProvider>
           <AuthProvider>
             <ContentModeProvider>

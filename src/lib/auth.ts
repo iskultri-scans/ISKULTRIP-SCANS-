@@ -1,10 +1,10 @@
 import { getAdminAuth } from './firebase-admin';
+import { SITE_CONFIG } from './config';
 
 export async function verifyAdminSession(idToken: string): Promise<boolean> {
   try {
     const decodedToken = await getAdminAuth().verifyIdToken(idToken);
-    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-    return decodedToken.email === adminEmail;
+    return Boolean(decodedToken.email && SITE_CONFIG.adminEmails.includes(decodedToken.email));
   } catch {
     return false;
   }
@@ -18,8 +18,7 @@ export async function createSessionCookie(idToken: string): Promise<string> {
 export async function verifySessionCookie(sessionCookie: string): Promise<boolean> {
   try {
     const decodedClaims = await getAdminAuth().verifySessionCookie(sessionCookie, true);
-    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-    return decodedClaims.email === adminEmail;
+    return Boolean(decodedClaims.email && SITE_CONFIG.adminEmails.includes(decodedClaims.email));
   } catch {
     return false;
   }
